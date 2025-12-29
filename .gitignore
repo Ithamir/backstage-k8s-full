@@ -1,16 +1,14 @@
 # Ignore everything
 *
 
-# Allow specific files and folders
+# Allow folders
+!**/
+
+# Allow file types
+!*.yaml
+
+# Allow specific files
 !.gitignore
 !README.md
-
-# Allow kubernetes folder
-!kubernetes/
-!kubernetes/*.yaml
-
-# Allow backstage config files
-!backstage/
-!backstage/Dockerfile
-!backstage/.dockerignore
-!backstage/app-config.production.yaml
+!Dockerfile
+!.dockerignore
