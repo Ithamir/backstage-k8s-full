@@ -25,3 +25,6 @@ terraform/.terraform.tfstate.lock.info
 
 # Explicitly Disallow
 node_modules
+.sandcastle
+docs
+CLAUDE.md
