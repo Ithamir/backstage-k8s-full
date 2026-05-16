@@ -1,12 +1,22 @@
-# Deploying Backstage on Kubernetes with Minikube
+# Deploying Backstage on Kubernetes (KinD + Terraform + Gateway API)
 
-This guide walks you through building a Backstage Docker image using a multi-stage Dockerfile and deploying it to Kubernetes (minikube). It incorporates lessons learned from common issues and their solutions directly into each step.
+A local Kubernetes development environment for Backstage, provisioned by Terraform with Envoy Gateway for ingress.
 
 **Official Documentation:**
 
 - [Backstage Docker Deployment](https://backstage.io/docs/deployment/docker/)
 - [Backstage Kubernetes Deployment](https://backstage.io/docs/deployment/k8s)
 - [Backstage Authentication](https://backstage.io/docs/auth/)
+
+## Prerequisites
+
+Install the following tools:
+
+- [Docker](https://docs.docker.com/get-docker/)
+- [KinD](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
+- [Terraform](https://developer.hashicorp.com/terraform/downloads) (>= 1.5)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- Node.js 20 or 22 (for building Backstage from source)
 
 ### Node.js Version
 
@@ -20,9 +30,6 @@ source ~/.bashrc
 # Install and use Node 22 (recommended - matches the Dockerfile runtime)
 nvm install 22
 nvm use 22
-
-# Verify the installation
-node -v  # Should show v22.x.x
 ```
 
 ### Build Dependencies
@@ -50,7 +57,7 @@ Three files in your generated `backstage/` directory need to be replaced or adde
 |------|---------|
 | `backstage/Dockerfile` | Multi-stage build that compiles everything inside Docker |
 | `backstage/.dockerignore` | Must NOT exclude source files (unlike the host build version) |
-| `backstage/app-config.production.yaml` | Production overrides with database connection and guest auth enabled |
+| `backstage/app-config.production.yaml` | Production overrides with database connection, guest auth, and Gateway URL |
 
 Key configuration notes:
 
@@ -58,105 +65,73 @@ Key configuration notes:
 
 `backstage/app-config.production.yaml` must include `dangerouslyAllowOutsideDevelopment: true` under the guest auth provider. Without this, you will get 401 Unauthorized errors because guest auth is disabled by default in containerized environments.
 
-## Step 3: Build the Docker Image
+## Step 3: Provision the Cluster
 
-Build the image with a version tag. Using semantic versioning makes it easier to track changes and avoid caching issues:
-
-```bash
-docker build -t backstage:1.0.0 backstage/
-```
-
-## Step 4: Set Up Kubernetes Resources
-
-### Create Namespace
+Terraform brings up a KinD cluster, a local Docker registry, and the Envoy Gateway controller:
 
 ```bash
-kubectl apply -f kubernetes/namespace.yaml
+cd terraform
+terraform init
+terraform apply
 ```
 
-### Deploy PostgreSQL
+This creates:
+- A 2-node KinD cluster (1 control-plane + 1 worker) with port 8080 mapped to the Envoy data plane
+- A local Docker registry at `localhost:5001`
+- Gateway API CRDs + Envoy Gateway controller
+- A custom `GatewayClass` (`eg-nodeport`) wired for NodePort exposure
 
-Apply the PostgreSQL resources in order (secrets and storage must exist before the deployment references them):
+Verify the cluster is ready:
 
 ```bash
-kubectl apply -f kubernetes/postgres-secrets.yaml
-kubectl apply -f kubernetes/postgres-storage.yaml
-kubectl apply -f kubernetes/postgres-service.yaml
-kubectl apply -f kubernetes/postgres.yaml
+kubectl get nodes
+# Should show 2 nodes (control-plane + worker) in Ready state
 ```
 
-Wait for PostgreSQL to be ready:
+## Step 4: Build and Push the Image
+
+Build the Backstage image and push it to the local registry:
 
 ```bash
-kubectl get pods -n backstage -w
-# Wait until postgres pod shows 1/1 Running
+docker build -t localhost:5001/backstage:1.0.0 backstage/
+docker push localhost:5001/backstage:1.0.0
 ```
 
-### Deploy Backstage
+The image is now available to the cluster via the registry — no manual image loading required.
 
-The `backstage.yaml` includes `imagePullPolicy: Never`, which tells Kubernetes to use the locally loaded image rather than trying to pull from a registry.
+## Step 5: Deploy Kubernetes Resources
 
-## Step 5: Load Image into Minikube and Deploy
-
-Minikube runs in an isolated environment with its own Docker daemon. Your locally built image exists only in your host's Docker daemon, so you must explicitly load it into minikube:
+Apply all manifests:
 
 ```bash
-minikube image load backstage:1.0.0
+kubectl apply -f kubernetes/
 ```
 
-Verify the image was loaded:
+Wait for Backstage to be ready:
 
 ```bash
-minikube image ls | grep backstage
+kubectl wait --for=condition=Ready pod -l app=backstage -n backstage --timeout=300s
 ```
-
-Now deploy Backstage:
-
-```bash
-kubectl apply -f kubernetes/backstage-secrets.yaml
-kubectl apply -f kubernetes/backstage-service.yaml
-kubectl apply -f kubernetes/backstage.yaml
-```
-
-Watch the pod status until it shows `1/1 Running`:
-
-```bash
-kubectl get pods -n backstage -w
-```
-
-Check the logs to ensure Backstage started successfully:
-
-```bash
-kubectl logs -n backstage -l app=backstage
-```
-
-You should see messages about plugins initializing without errors.
 
 ## Step 6: Access Backstage
 
-Forward the service port to your local machine. Use port 8080 to avoid needing sudo:
+Open <http://backstage.localtest.me:8080> in your browser. No port-forwarding required.
 
-```bash
-kubectl port-forward --namespace=backstage svc/backstage 8080:80
-```
+`localtest.me` is a real DNS domain that resolves to 127.0.0.1. Traffic flows through KinD's port mappings into the Envoy Gateway, which routes based on the hostname to the Backstage service.
 
-Open <http://localhost:8080> in your browser. You should see the Backstage UI and be able to log in as a guest.
+You should see the Backstage UI and be able to log in as a guest.
 
 ## Updating Backstage
 
-When you make changes and need to redeploy, always use a new image tag. Kubernetes caches images by tag, so using the same tag causes it to reuse the cached version even after you've loaded a new image.
+When you make changes and need to redeploy:
 
 ```bash
-# Make your changes to the source code or configuration
-
 # Build with a new tag
-docker build -t backstage:1.0.1 backstage/
-
-# Load the new image into minikube
-minikube image load backstage:1.0.1
+docker build -t localhost:5001/backstage:1.0.1 backstage/
+docker push localhost:5001/backstage:1.0.1
 
 # Update the deployment to use the new image
-kubectl set image deployment/backstage -n backstage backstage=backstage:1.0.1
+kubectl set image deployment/backstage -n backstage backstage=localhost:5001/backstage:1.0.1
 ```
 
 ## Useful Commands
@@ -174,29 +149,51 @@ kubectl exec -n backstage deploy/backstage -- cat /app/app-config.production.yam
 # Restart deployment
 kubectl rollout restart deployment backstage -n backstage
 
-# Delete and recreate pod
-kubectl delete pod -n backstage -l app=backstage
+# Check Gateway status
+kubectl get gateway -n gateway
+kubectl get httproute -n backstage
 
-# Check minikube images
-minikube image ls | grep backstage
+# View Envoy Gateway controller logs
+kubectl logs -n envoy-gateway-system deploy/envoy-gateway
 
-# Remove image from minikube
-minikube ssh "docker rmi -f backstage:1.0.0"
+# List images in local registry
+curl -s http://localhost:5001/v2/_catalog
 
 # View all resources in the namespace
 kubectl get all -n backstage
+
+# Tear down the cluster
+cd terraform && terraform destroy
+```
+
+## Smoke Test
+
+Run the full end-to-end verification (assumes image is already pushed to the local registry):
+
+```bash
+make smoke
+```
+
+Run Terraform validation only:
+
+```bash
+make tf-check
 ```
 
 ## Next Steps
 
-Once Backstage is running, you may want to:
+1. **Configure a production auth provider** — Replace guest auth with GitHub, Google, Okta, or another provider. See the [Authentication documentation](https://backstage.io/docs/auth/).
 
-1. **Configure a production auth provider** - Replace guest auth with GitHub, Google, Okta, or another provider. See the [Authentication documentation](https://backstage.io/docs/auth/).
+2. **Add catalog entities** — Populate the software catalog with your services, APIs, and documentation.
 
-2. **Add catalog entities** - Populate the software catalog with your services, APIs, and documentation.
+3. **Configure the Kubernetes plugin** — Enable viewing Kubernetes resources from within Backstage.
 
-3. **Configure the Kubernetes plugin** - Enable viewing Kubernetes resources from within Backstage.
+4. **Set up TechDocs** — Enable documentation generation and viewing.
 
-4. **Set up TechDocs** - Enable documentation generation and viewing.
+5. **Deploy to a production cluster** — Move beyond KinD to EKS, GKE, or another managed Kubernetes service.
 
-5. **Deploy to a production cluster** - Move beyond minikube to EKS, GKE, or another managed Kubernetes service.
+6. **Add HTTPS** — Configure cert-manager or mkcert for TLS termination at the Gateway.
+
+## Architecture Decision
+
+See [ADR-0001](docs/adr/0001-kind-terraform-envoy-gateway.md) for the full rationale behind the KinD + Terraform + Envoy Gateway architecture.

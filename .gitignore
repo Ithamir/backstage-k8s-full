@@ -8,12 +8,14 @@
 !*.yaml
 !*.tf
 !*.hcl
+!*.md
 
 # Allow specific files
 !.gitignore
-!README.md
 !Dockerfile
 !.dockerignore
+!Makefile
+!todo.txt
 
 # Terraform state and cache (override folder allowlist)
 terraform/.terraform/**
