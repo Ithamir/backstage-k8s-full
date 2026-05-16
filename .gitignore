@@ -12,3 +12,6 @@
 !README.md
 !Dockerfile
 !.dockerignore
+
+# Explicitly Disallow
+node_modules
