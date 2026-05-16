@@ -44,24 +44,19 @@ This scaffolds a complete Backstage application in a `backstage/` folder with al
 
 ## Step 2: Configure Repository Files
 
-Several files need to be created or modified from the defaults. The complete files are provided in this repository:
+Three files in your generated `backstage/` directory need to be replaced or added. The reference versions live in this repo at the matching paths — overwrite or create them in your `backstage/` directory before building:
 
 | File | Purpose |
 |------|---------|
-| `Dockerfile` | Multi-stage build that compiles everything inside Docker |
-| `.dockerignore` | Must NOT exclude source files (unlike the host build version) |
-| `.gitignore` | Standard Node.js/Yarn exclusions |
-| `app-config.production.yaml` | Production overrides with database connection and guest auth enabled |
+| `backstage/Dockerfile` | Multi-stage build that compiles everything inside Docker |
+| `backstage/.dockerignore` | Must NOT exclude source files (unlike the host build version) |
+| `backstage/app-config.production.yaml` | Production overrides with database connection and guest auth enabled |
 
 Key configuration notes:
 
-The `.dockerignore` must use the multi-stage version that does NOT exclude `packages/*/src`. The default from `create-app` excludes source files, which causes `yarn tsc` to fail with "No inputs were found". Copy the `Dockerfile`, `.dockerignore`, and `app-config.production.yaml` from the repo root into the backstage folder before building:
+`backstage/.dockerignore` must NOT exclude `packages/*/src`. The default from `create-app` excludes source files, which causes `yarn tsc` to fail with "No inputs were found".
 
-```bash
-cp Dockerfile .dockerignore app-config.production.yaml backstage/
-```
-
-The `app-config.production.yaml` must include `dangerouslyAllowOutsideDevelopment: true` under the guest auth provider. Without this, you will get 401 Unauthorized errors because guest auth is disabled by default in containerized environments.
+`backstage/app-config.production.yaml` must include `dangerouslyAllowOutsideDevelopment: true` under the guest auth provider. Without this, you will get 401 Unauthorized errors because guest auth is disabled by default in containerized environments.
 
 ## Step 3: Build the Docker Image
 
