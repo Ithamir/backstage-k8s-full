@@ -6,9 +6,17 @@
 
 # Allow file types
 !*.yaml
+!*.tf
+!*.hcl
 
 # Allow specific files
 !.gitignore
 !README.md
 !Dockerfile
 !.dockerignore
+
+# Terraform state and cache (override folder allowlist)
+terraform/.terraform/**
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/.terraform.tfstate.lock.info
