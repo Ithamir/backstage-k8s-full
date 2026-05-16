@@ -1,2 +1,4 @@
 # KinD environment overrides for backstage chart.
 # These values are for local development only.
+image:
+  repository: localhost:5001/backstage

@@ -1,4 +1,4 @@
-.PHONY: smoke tf-check image charts-lint
+.PHONY: smoke tf-check image charts-lint charts-test
 
 KUBE_CONTEXT := kind-backstage
 GATEWAY_NS := gateway
@@ -16,7 +16,10 @@ charts-lint:
 	helm lint charts/edge-gateway -f deploy/kind/edge-gateway.yaml
 	helm lint charts/backstage -f deploy/kind/backstage.yaml
 
-smoke: tf-check charts-lint
+charts-test:
+	./tests/charts/test-backstage-image.sh
+
+smoke: tf-check charts-lint charts-test
 	terraform -chdir=terraform apply -auto-approve
 	helm upgrade --install edge-gateway charts/edge-gateway \
 		--namespace $(GATEWAY_NS) --create-namespace --wait \
