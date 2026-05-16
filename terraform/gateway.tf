@@ -1,9 +1,9 @@
-resource "helm_release" "gateway_crds" {
-  name             = "gateway-crds"
-  chart            = "oci://docker.io/envoyproxy/gateway-crds-helm"
-  version          = "v1.8.0"
-  create_namespace = true
-  namespace        = "envoy-gateway-system"
+resource "terraform_data" "gateway_crds" {
+  triggers_replace = ["v1.8.0"]
+
+  provisioner "local-exec" {
+    command = "helm template gateway-crds oci://docker.io/envoyproxy/gateway-crds-helm --version v1.8.0 --set crds.gatewayAPI.enabled=true --set crds.gatewayAPI.channel=standard --set crds.envoyGateway.enabled=true | kubectl --context kind-${var.cluster_name} apply --server-side --force-conflicts -f -"
+  }
 
   depends_on = [kind_cluster.this]
 }
@@ -20,7 +20,7 @@ resource "helm_release" "gateway" {
     value = "false"
   }
 
-  depends_on = [helm_release.gateway_crds]
+  depends_on = [terraform_data.gateway_crds]
 }
 
 resource "kubectl_manifest" "envoy_proxy" {
@@ -40,6 +40,7 @@ resource "kubectl_manifest" "envoy_proxy" {
               type: StrategicMerge
               value:
                 spec:
+                  externalTrafficPolicy: Cluster
                   ports:
                   - port: 80
                     nodePort: 30080

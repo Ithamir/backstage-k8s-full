@@ -4,6 +4,8 @@ app:
 backend:
   baseUrl: http://backstage.localtest.me:8080
   listen: ":7007"
+  csp:
+    upgrade-insecure-requests: false
 
   # config options: https://node-postgres.com/apis/client
   database:

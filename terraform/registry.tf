@@ -1,7 +1,3 @@
-resource "docker_network" "kind" {
-  name = "kind"
-}
-
 resource "docker_image" "registry" {
   name = "registry:2"
 }
@@ -18,6 +14,8 @@ resource "docker_container" "kind_registry" {
   }
 
   networks_advanced {
-    name = docker_network.kind.id
+    name = "kind"
   }
+
+  depends_on = [kind_cluster.this]
 }

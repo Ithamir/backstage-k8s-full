@@ -26,6 +26,4 @@ resource "kind_cluster" "this" {
       role = "worker"
     }
   }
-
-  depends_on = [docker_container.kind_registry]
 }
