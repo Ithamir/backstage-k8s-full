@@ -15,6 +15,7 @@ Install the following tools:
 - [Docker](https://docs.docker.com/get-docker/)
 - [KinD](https://kind.sigs.k8s.io/docs/user/quick-start/#installation)
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) (>= 1.5)
+- [Helm](https://helm.sh/docs/intro/install/) (>= 3.x)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
 - Node.js 20 or 22 (for building Backstage from source)
 
@@ -99,18 +100,31 @@ docker push localhost:5001/backstage:1.0.0
 
 The image is now available to the cluster via the registry — no manual image loading required.
 
-## Step 5: Deploy Kubernetes Resources
+## Step 5: Deploy with Helm
 
-Apply all manifests:
+Install the edge-gateway chart (shared Gateway resource) and then the backstage chart:
 
 ```bash
-kubectl apply -f kubernetes/
+# Install the edge-gateway (creates the gateway namespace)
+helm upgrade --install edge-gateway charts/edge-gateway \
+  --namespace gateway --create-namespace --wait \
+  --kube-context kind-backstage \
+  -f deploy/kind/edge-gateway.yaml
+
+# Pre-create the backstage namespace (idempotent)
+kubectl create namespace backstage --dry-run=client -o yaml | kubectl apply -f - --context kind-backstage
+
+# Install backstage
+helm upgrade --install backstage charts/backstage \
+  --namespace backstage --wait --timeout 5m \
+  --kube-context kind-backstage \
+  -f deploy/kind/backstage.yaml
 ```
 
-Wait for Backstage to be ready:
+Or simply run the full smoke test which performs all of the above:
 
 ```bash
-kubectl wait --for=condition=Ready pod -l app=backstage -n backstage --timeout=300s
+make smoke
 ```
 
 ## Step 6: Access Backstage
@@ -130,21 +144,22 @@ When you make changes and need to redeploy:
 docker build -t localhost:5001/backstage:1.0.1 backstage/
 docker push localhost:5001/backstage:1.0.1
 
-# Update the deployment to use the new image
-kubectl set image deployment/backstage -n backstage backstage=localhost:5001/backstage:1.0.1
+# Upgrade the helm release with the new image tag
+helm upgrade backstage charts/backstage \
+  --namespace backstage --wait --timeout 5m \
+  --kube-context kind-backstage \
+  -f deploy/kind/backstage.yaml \
+  --set image.tag=1.0.1
 ```
 
 ## Useful Commands
 
 ```bash
 # View pod logs
-kubectl logs -n backstage -l app=backstage
+kubectl logs -n backstage -l app.kubernetes.io/name=backstage
 
 # View pod logs with timestamps
 kubectl logs -n backstage deploy/backstage --timestamps
-
-# Execute commands in the container (useful for debugging config)
-kubectl exec -n backstage deploy/backstage -- cat /app/app-config.production.yaml
 
 # Restart deployment
 kubectl rollout restart deployment backstage -n backstage
@@ -162,6 +177,10 @@ curl -s http://localhost:5001/v2/_catalog
 # View all resources in the namespace
 kubectl get all -n backstage
 
+# Uninstall charts
+helm uninstall backstage -n backstage
+helm uninstall edge-gateway -n gateway
+
 # Tear down the cluster
 cd terraform && terraform destroy
 ```
@@ -178,6 +197,12 @@ Run Terraform validation only:
 
 ```bash
 make tf-check
+```
+
+Run Helm chart linting only:
+
+```bash
+make charts-lint
 ```
 
 ## Next Steps

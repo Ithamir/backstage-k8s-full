@@ -1,0 +1,9 @@
+The edge-gateway chart has been installed.
+
+IMPORTANT: This chart requires Gateway API v1 CRDs to be installed in the cluster.
+In this repo, Gateway API CRDs are provisioned by Terraform (terraform/gateway.tf).
+If you see errors about unknown resource types, ensure Terraform has been applied first.
+
+Gateway: {{ include "edge-gateway.fullname" . }}
+Hostname: {{ .Values.hostname }}
+GatewayClass: {{ .Values.gatewayClassName }}

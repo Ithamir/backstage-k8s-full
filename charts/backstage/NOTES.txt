@@ -1,0 +1,10 @@
+The backstage chart has been installed.
+
+IMPORTANT: This chart requires Gateway API v1 CRDs to be installed in the cluster.
+In this repo, Gateway API CRDs are provisioned by Terraform (terraform/gateway.tf).
+If you see errors about unknown resource types, ensure Terraform has been applied first.
+
+Backstage is available at: http://{{ .Values.hostname }}:8080
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Release.Namespace }}

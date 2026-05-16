@@ -1,0 +1,10 @@
+gatewayClassName: eg-nodeport
+
+hostname: backstage.localtest.me
+
+allowedRoutes:
+  namespaces:
+    from: Selector
+    selector:
+      matchLabels:
+        kubernetes.io/metadata.name: backstage

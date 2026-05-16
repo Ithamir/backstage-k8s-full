@@ -1,4 +1,8 @@
-.PHONY: smoke tf-check image
+.PHONY: smoke tf-check image charts-lint
+
+KUBE_CONTEXT := kind-backstage
+GATEWAY_NS := gateway
+BACKSTAGE_NS := backstage
 
 image:
 	docker build -t localhost:5001/backstage:1.0.0 backstage/
@@ -8,11 +12,23 @@ tf-check:
 	terraform -chdir=terraform fmt -check -recursive
 	terraform -chdir=terraform validate
 
-smoke:
+charts-lint:
+	helm lint charts/edge-gateway -f deploy/kind/edge-gateway.yaml
+	helm lint charts/backstage -f deploy/kind/backstage.yaml
+
+smoke: tf-check charts-lint
 	terraform -chdir=terraform apply -auto-approve
-	kubectl apply -f kubernetes/
-	kubectl wait --for=condition=Ready pod -l app=backstage -n backstage --timeout=300s
-	kubectl wait --for=condition=Programmed gateway/backstage-gateway -n gateway --timeout=60s
+	helm upgrade --install edge-gateway charts/edge-gateway \
+		--namespace $(GATEWAY_NS) --create-namespace --wait \
+		--kube-context $(KUBE_CONTEXT) \
+		-f deploy/kind/edge-gateway.yaml
+	kubectl create namespace $(BACKSTAGE_NS) --dry-run=client -o yaml | kubectl apply -f - --context $(KUBE_CONTEXT)
+	helm upgrade --install backstage charts/backstage \
+		--namespace $(BACKSTAGE_NS) --wait --timeout 5m \
+		--kube-context $(KUBE_CONTEXT) \
+		-f deploy/kind/backstage.yaml
+	kubectl wait --for=condition=Available deployment/backstage \
+		-n $(BACKSTAGE_NS) --timeout=300s --context $(KUBE_CONTEXT)
 	@echo "Verifying Backstage is reachable..."
 	curl -fsS http://backstage.localtest.me:8080 | grep -q '<title>'
 	@echo "Smoke test passed."

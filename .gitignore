@@ -9,13 +9,14 @@
 !*.tf
 !*.hcl
 !*.md
+!*.tpl
+!*.txt
 
 # Allow specific files
 !.gitignore
 !Dockerfile
 !.dockerignore
 !Makefile
-!todo.txt
 
 # Terraform state and cache (override folder allowlist)
 terraform/.terraform/**

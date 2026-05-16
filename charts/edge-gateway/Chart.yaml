@@ -1,0 +1,8 @@
+apiVersion: v2
+name: edge-gateway
+description: Shared Gateway resource for routing traffic to backend services
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+annotations:
+  cluster-requirements: Gateway API v1 CRDs must be installed (provisioned by Terraform in this repo)

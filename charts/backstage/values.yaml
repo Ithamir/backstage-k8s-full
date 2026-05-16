@@ -1,0 +1,59 @@
+image:
+  repository: localhost:5001/backstage
+  tag: "1.0.0"
+  pullPolicy: Always
+
+serviceAccount:
+  annotations: {}
+
+resources:
+  requests:
+    cpu: 200m
+    memory: 256Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+probes:
+  enabled: false
+  readiness:
+    path: /healthcheck
+    port: 7007
+  liveness:
+    path: /healthcheck
+    port: 7007
+
+service:
+  port: 80
+  targetPort: http
+
+github:
+  auth:
+    token: TokenTokenTokenTokenMalkovichToken
+
+postgres:
+  image:
+    repository: postgres
+    tag: "13.2-alpine"
+    pullPolicy: IfNotPresent
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  storage:
+    size: 2Gi
+  auth:
+    username: backstage
+    password: hunter2
+    database: backstage
+    host: postgres
+    port: "5432"
+
+gateway:
+  name: edge-gateway
+  namespace: gateway
+
+hostname: backstage.localtest.me
