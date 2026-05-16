@@ -1,0 +1,18 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: backstage-gateway
+  namespace: gateway
+spec:
+  gatewayClassName: eg-nodeport
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      hostname: backstage.localtest.me
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              kubernetes.io/metadata.name: backstage

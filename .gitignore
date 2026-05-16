@@ -6,12 +6,22 @@
 
 # Allow file types
 !*.yaml
+!*.tf
+!*.hcl
+!*.md
 
 # Allow specific files
 !.gitignore
-!README.md
 !Dockerfile
 !.dockerignore
+!Makefile
+!todo.txt
+
+# Terraform state and cache (override folder allowlist)
+terraform/.terraform/**
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/.terraform.tfstate.lock.info
 
 # Explicitly Disallow
 node_modules
