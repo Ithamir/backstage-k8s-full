@@ -11,6 +11,8 @@ spec:
       {{- include "backstage.selectorLabels" . | nindent 6 }}
   template:
     metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
         {{- include "backstage.labels" . | nindent 8 }}
     spec:
@@ -29,6 +31,14 @@ spec:
         - name: backstage
           image: "{{ include "backstage.image" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "packages/backend"
+            - "--config"
+            - "app-config.yaml"
+            - "--config"
+            - "/etc/backstage/app-config.runtime.yaml"
+          command:
+            - "node"
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
@@ -43,6 +53,10 @@ spec:
                 name: {{ include "backstage.postgresSecretName" . }}
             - secretRef:
                 name: {{ include "backstage.githubSecretName" . }}
+          volumeMounts:
+            - name: app-config
+              mountPath: /etc/backstage
+              readOnly: true
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- if .Values.probes.enabled }}
@@ -55,3 +69,7 @@ spec:
               port: {{ .Values.probes.liveness.port }}
               path: {{ .Values.probes.liveness.path }}
           {{- end }}
+      volumes:
+        - name: app-config
+          configMap:
+            name: {{ include "backstage.fullname" . }}-app-config

@@ -63,3 +63,35 @@ gateway:
   namespace: gateway
 
 hostname: backstage.localtest.me
+
+appConfig:
+  app:
+    baseUrl: http://backstage.localtest.me:8080
+  backend:
+    baseUrl: http://backstage.localtest.me:8080
+    listen: ":7007"
+    csp:
+      upgrade-insecure-requests: false
+    database:
+      client: pg
+      connection:
+        host: ${POSTGRES_HOST}
+        port: ${POSTGRES_PORT}
+        user: ${POSTGRES_USER}
+        password: ${POSTGRES_PASSWORD}
+  auth:
+    providers:
+      guest:
+        dangerouslyAllowOutsideDevelopment: true
+  catalog:
+    locations:
+      - type: file
+        target: ./examples/entities.yaml
+      - type: file
+        target: ./examples/template/template.yaml
+        rules:
+          - allow: [Template]
+      - type: file
+        target: ./examples/org.yaml
+        rules:
+          - allow: [User, Group]

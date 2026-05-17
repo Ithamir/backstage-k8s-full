@@ -19,6 +19,7 @@ charts-lint:
 charts-test:
 	./tests/charts/test-backstage-image.sh
 	./tests/charts/test-backstage-secrets.sh
+	./tests/charts/test-backstage-configmap.sh
 
 smoke: tf-check charts-lint charts-test
 	terraform -chdir=terraform apply -auto-approve

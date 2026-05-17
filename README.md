@@ -52,19 +52,18 @@ This scaffolds a complete Backstage application in a `backstage/` folder with al
 
 ## Step 2: Configure Repository Files
 
-Three files in your generated `backstage/` directory need to be replaced or added. The reference versions live in this repo at the matching paths — overwrite or create them in your `backstage/` directory before building:
+Two files in your generated `backstage/` directory need to be replaced or added. The reference versions live in this repo at the matching paths — overwrite or create them in your `backstage/` directory before building:
 
 | File | Purpose |
 |------|---------|
 | `backstage/Dockerfile` | Multi-stage build that compiles everything inside Docker |
 | `backstage/.dockerignore` | Must NOT exclude source files (unlike the host build version) |
-| `backstage/app-config.production.yaml` | Production overrides with database connection, guest auth, and Gateway URL |
 
 Key configuration notes:
 
 `backstage/.dockerignore` must NOT exclude `packages/*/src`. The default from `create-app` excludes source files, which causes `yarn tsc` to fail with "No inputs were found".
 
-`backstage/app-config.production.yaml` must include `dangerouslyAllowOutsideDevelopment: true` under the guest auth provider. Without this, you will get 401 Unauthorized errors because guest auth is disabled by default in containerized environments.
+Production app-config is no longer baked into the image. Instead, the Helm chart renders a ConfigMap from `values.appConfig` and mounts it into the pod at runtime via `--config /etc/backstage/app-config.runtime.yaml`. To change runtime configuration, edit `deploy/kind/backstage.yaml` (or the chart's `values.appConfig` defaults) and run `helm upgrade` — no image rebuild required.
 
 ## Step 3: Provision the Cluster
 
