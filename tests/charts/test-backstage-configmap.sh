@@ -46,6 +46,4 @@ else
   echo "FAIL: checksum should change when appConfig changes"
 fi
 
-echo ""
-echo "ConfigMap tests: $PASS passed, $FAIL failed"
-[ "$FAIL" -eq 0 ]
+report_results "ConfigMap"

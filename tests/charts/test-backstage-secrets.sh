@@ -57,6 +57,4 @@ assert_not_contains "no PVC when postgres disabled" "$output" "kind: PersistentV
 assert_not_contains "no postgres Secret when disabled" "$output" "POSTGRES_USER:"
 assert_contains "backstage refs external pg secret" "$output" "name: external-pg-secret"
 
-echo ""
-echo "Secrets/postgres tests: $PASS passed, $FAIL failed"
-[ "$FAIL" -eq 0 ]
+report_results "Secrets/postgres"

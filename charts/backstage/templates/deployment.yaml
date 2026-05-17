@@ -31,14 +31,14 @@ spec:
         - name: backstage
           image: "{{ include "backstage.image" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - "node"
           args:
             - "packages/backend"
             - "--config"
             - "app-config.yaml"
             - "--config"
             - "/etc/backstage/app-config.runtime.yaml"
-          command:
-            - "node"
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:

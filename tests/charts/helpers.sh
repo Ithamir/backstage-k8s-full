@@ -44,3 +44,10 @@ assert_fails() {
     echo "  got: $output"
   fi
 }
+
+report_results() {
+  local suite="$1"
+  echo ""
+  echo "$suite tests: $PASS passed, $FAIL failed"
+  [ "$FAIL" -eq 0 ]
+}
