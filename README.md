@@ -133,9 +133,12 @@ Backstage discovers catalog entities from this GitHub repo at runtime. It needs 
 
 1. Create a **fine-grained PAT** at <https://github.com/settings/personal-access-tokens/new>:
    - **Repository access:** Only select `Itamar-Ratson/backstage-k8s-full`
-   - **Permissions:** `Contents: Read` (plus auto-granted `Metadata: Read`)
+   - **Permissions:**
+     - `Contents: Read` — read catalog-info.yaml file contents
+     - `Commit statuses: Read` — preflight check the catalog URL provider performs before reading (without this you get `403 Forbidden` and an empty catalog)
+     - `Metadata: Read` — auto-granted
 
-2. Create the Kubernetes secret:
+2. Create the Kubernetes secret. Either use the imperative form:
 
 ```bash
 kubectl create namespace backstage --dry-run=client -o yaml | kubectl apply -f - --context kind-backstage
@@ -143,6 +146,8 @@ kubectl create secret generic backstage-github-token \
   --from-literal=GITHUB_TOKEN="$GITHUB_TOKEN" \
   -n backstage --context kind-backstage
 ```
+
+…or copy `secret-backstage-github-token.example.yaml` to `secret-backstage-github-token.yaml` (gitignored), substitute the PAT, and `kubectl apply -f` it.
 
 Verify:
 
