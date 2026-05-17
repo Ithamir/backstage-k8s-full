@@ -20,6 +20,11 @@ assert_not_contains "github create=false should not render backstage-github Secr
 assert_fails "github empty token fails" "github.auth.token is required" \
   helm template backstage "$CHART_DIR" -f "$FIXTURES/github-create-empty-token.yaml"
 
+# Test 3b: create=false with empty existingSecret fails with required message
+assert_fails "github defaults (create=false, no existingSecret) fails" \
+  "github.auth.existingSecret is required when github.auth.create=false" \
+  helm template backstage "$CHART_DIR" -f "$FIXTURES/github-defaults.yaml"
+
 echo ""
 echo "=== Postgres auth hybrid tests ==="
 

@@ -3,6 +3,7 @@ image:
   tag: "2.5.0"
 github:
   auth:
+    create: true
     token: test-token
 postgres:
   auth:

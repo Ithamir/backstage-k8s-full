@@ -1,13 +1,66 @@
+---
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: backstage
-  description: An example of a Backstage application.
-  # Example for optional annotations
-  # annotations:
-  #   github.com/project-slug: backstage/backstage
-  #   backstage.io/techdocs-ref: dir:.
+  description: Backstage application providing a unified developer portal with software catalog, scaffolder, and TechDocs.
+  annotations:
+    backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/backstage/
+    github.com/project-slug: Itamar-Ratson/backstage-k8s-full
 spec:
-  type: website
-  owner: john@example.com
-  lifecycle: experimental
+  type: service
+  lifecycle: production
+  owner: platform
+  system: developer-portal
+  dependsOn:
+    - resource:backstage-postgres
+    - resource:edge-gateway
+  providesApis:
+    - backstage-api
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: backstage-api
+  description: Backstage backend API serving the software catalog, scaffolder, and auth endpoints.
+  annotations:
+    backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/backstage/
+    github.com/project-slug: Itamar-Ratson/backstage-k8s-full
+spec:
+  type: openapi
+  lifecycle: production
+  owner: platform
+  system: developer-portal
+  definition: |
+    openapi: "3.0.0"
+    info:
+      title: Backstage API
+      version: "1.0.0"
+      description: Backstage backend API endpoints.
+    paths:
+      /healthcheck:
+        get:
+          summary: Health check
+          responses:
+            "200":
+              description: Service is healthy
+      /api/catalog/entities:
+        get:
+          summary: List catalog entities
+          responses:
+            "200":
+              description: Array of catalog entities
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: backstage-postgres
+  description: PostgreSQL database backing the Backstage catalog, auth, and scaffolder state.
+  annotations:
+    backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/charts/backstage/
+    github.com/project-slug: Itamar-Ratson/backstage-k8s-full
+spec:
+  type: database
+  lifecycle: production
+  owner: platform
+  system: developer-portal

@@ -20,6 +20,7 @@ charts-test:
 	./tests/charts/test-backstage-image.sh
 	./tests/charts/test-backstage-secrets.sh
 	./tests/charts/test-backstage-configmap.sh
+	./tests/charts/test-backstage-catalog-config.sh
 
 smoke: tf-check charts-lint charts-test
 	terraform -chdir=terraform apply -auto-approve
@@ -29,6 +30,12 @@ smoke: tf-check charts-lint charts-test
 		-f deploy/kind/edge-gateway.yaml
 	kubectl create namespace $(BACKSTAGE_NS) --dry-run=client -o yaml | kubectl apply -f - --context $(KUBE_CONTEXT)
 	kubectl label namespace $(BACKSTAGE_NS) gateway-routes=enabled --overwrite --context $(KUBE_CONTEXT)
+	@echo "Checking for backstage-github-token secret..."
+	@kubectl get secret backstage-github-token -n $(BACKSTAGE_NS) --context $(KUBE_CONTEXT) >/dev/null 2>&1 || \
+		(echo "ERROR: Secret backstage-github-token not found in namespace $(BACKSTAGE_NS)." && \
+		 echo "Create it with:" && \
+		 echo '  kubectl create secret generic backstage-github-token --from-literal=GITHUB_TOKEN="$$GITHUB_TOKEN" -n $(BACKSTAGE_NS) --context $(KUBE_CONTEXT)' && \
+		 exit 1)
 	helm upgrade --install backstage charts/backstage \
 		--namespace $(BACKSTAGE_NS) --wait --timeout 5m \
 		--kube-context $(KUBE_CONTEXT) \
@@ -37,4 +44,7 @@ smoke: tf-check charts-lint charts-test
 		-n $(BACKSTAGE_NS) --timeout=300s --context $(KUBE_CONTEXT)
 	@echo "Verifying Backstage is reachable..."
 	curl -fsS http://backstage.localtest.me:8080 | grep -q '<title>'
+	@echo "Verifying catalog is non-empty..."
+	@curl -fsS http://backstage.localtest.me:8080/api/catalog/entities | grep -q '"kind"' || \
+		(echo "WARN: Catalog appears empty — GitHub discovery may not have completed yet." && exit 1)
 	@echo "Smoke test passed."

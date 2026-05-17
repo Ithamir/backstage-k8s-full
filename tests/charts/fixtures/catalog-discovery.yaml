@@ -1,0 +1,14 @@
+github:
+  auth:
+    create: false
+    existingSecret: backstage-github-token
+
+postgres:
+  auth:
+    password: test-pass
+
+appConfig:
+  catalog:
+    locations:
+      - type: url
+        target: https://github.com/Itamar-Ratson/backstage-k8s-full/blob/main/**/catalog-info.yaml
