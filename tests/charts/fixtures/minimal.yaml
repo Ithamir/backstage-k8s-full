@@ -1,0 +1,6 @@
+github:
+  auth:
+    token: test-token
+postgres:
+  auth:
+    password: test-pass

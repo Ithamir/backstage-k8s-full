@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "backstage.fullname" . }}
+  labels:
+    {{- include "backstage.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "backstage.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "backstage.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "backstage.fullname" . }}
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- range . }}
+        - name: {{ . }}
+        {{- end }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: backstage
+          image: "{{ include "backstage.image" . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - "node"
+          args:
+            - "packages/backend"
+            - "--config"
+            - "app-config.yaml"
+            - "--config"
+            - "/etc/backstage/app-config.runtime.yaml"
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: false
+          ports:
+            - name: http
+              containerPort: 7007
+          envFrom:
+            - secretRef:
+                name: {{ include "backstage.postgresSecretName" . }}
+            - secretRef:
+                name: {{ include "backstage.githubSecretName" . }}
+          volumeMounts:
+            - name: app-config
+              mountPath: /etc/backstage
+              readOnly: true
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.probes.enabled }}
+          readinessProbe:
+            httpGet:
+              port: {{ .Values.probes.readiness.port }}
+              path: {{ .Values.probes.readiness.path }}
+          livenessProbe:
+            httpGet:
+              port: {{ .Values.probes.liveness.port }}
+              path: {{ .Values.probes.liveness.path }}
+          {{- end }}
+      volumes:
+        - name: app-config
+          configMap:
+            name: {{ include "backstage.fullname" . }}-app-config

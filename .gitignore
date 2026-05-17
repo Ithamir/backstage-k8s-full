@@ -9,13 +9,15 @@
 !*.tf
 !*.hcl
 !*.md
+!*.tpl
+!*.txt
+!*.sh
 
 # Allow specific files
 !.gitignore
 !Dockerfile
 !.dockerignore
 !Makefile
-!todo.txt
 
 # Terraform state and cache (override folder allowlist)
 terraform/.terraform/**
@@ -26,5 +28,4 @@ terraform/.terraform.tfstate.lock.info
 # Explicitly Disallow
 node_modules
 .sandcastle
-docs
 CLAUDE.md

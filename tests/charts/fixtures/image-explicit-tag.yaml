@@ -1,0 +1,9 @@
+image:
+  repository: my-registry/backstage
+  tag: "2.5.0"
+github:
+  auth:
+    token: test-token
+postgres:
+  auth:
+    password: test-pass

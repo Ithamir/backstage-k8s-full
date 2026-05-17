@@ -1,0 +1,19 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ include "edge-gateway.fullname" . }}
+  labels:
+    {{- include "edge-gateway.labels" . | nindent 4 }}
+spec:
+  gatewayClassName: {{ .Values.gatewayClassName }}
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      hostname: {{ .Values.hostname | quote }}
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              {{ .Values.allowedRoutes.label.key }}: {{ .Values.allowedRoutes.label.value }}

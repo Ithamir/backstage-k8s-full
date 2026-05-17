@@ -1,0 +1,8 @@
+gatewayClassName: eg-nodeport
+
+hostname: "*.localtest.me"
+
+allowedRoutes:
+  label:
+    key: gateway-routes
+    value: enabled

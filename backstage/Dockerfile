@@ -59,9 +59,9 @@ RUN --mount=type=cache,target=/home/node/.cache/yarn,sharing=locked,uid=1000,gid
   yarn workspaces focus --all --production && rm -rf "$(yarn cache clean)"
 
 COPY --from=build --chown=node:node /app/packages/backend/dist/bundle/ ./
-COPY --chown=node:node app-config*.yaml ./
+COPY --chown=node:node app-config.yaml ./
 
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--no-node-snapshot"
 
-CMD ["node", "packages/backend", "--config", "app-config.yaml", "--config", "app-config.production.yaml"]
+CMD ["node", "packages/backend", "--config", "app-config.yaml"]
