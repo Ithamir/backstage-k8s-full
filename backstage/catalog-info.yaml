@@ -1,13 +1,65 @@
+---
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: backstage
-  description: An example of a Backstage application.
-  # Example for optional annotations
-  # annotations:
-  #   github.com/project-slug: backstage/backstage
-  #   backstage.io/techdocs-ref: dir:.
+  description: Backstage developer portal deployed on Kubernetes via Helm.
+  annotations:
+    backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/backstage/
+    github.com/project-slug: Itamar-Ratson/backstage-k8s-full
 spec:
-  type: website
-  owner: john@example.com
+  type: service
   lifecycle: experimental
+  owner: platform
+  system: developer-portal
+  dependsOn:
+    - resource:backstage-postgres
+    - resource:edge-gateway
+  providesApis:
+    - backstage-api
+---
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: backstage-api
+  description: Backstage backend API serving catalog, scaffolder, and other plugin endpoints.
+  annotations:
+    backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/backstage/
+    github.com/project-slug: Itamar-Ratson/backstage-k8s-full
+spec:
+  type: openapi
+  lifecycle: experimental
+  owner: platform
+  system: developer-portal
+  definition: |
+    openapi: "3.0.0"
+    info:
+      title: Backstage API
+      version: "1.0.0"
+    paths:
+      /healthcheck:
+        get:
+          summary: Health check endpoint
+          responses:
+            "200":
+              description: OK
+      /api/catalog/entities:
+        get:
+          summary: List catalog entities
+          responses:
+            "200":
+              description: List of entities
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: backstage-postgres
+  description: PostgreSQL database backing the Backstage catalog and other plugins.
+  annotations:
+    backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/backstage/
+    github.com/project-slug: Itamar-Ratson/backstage-k8s-full
+spec:
+  type: database
+  lifecycle: experimental
+  owner: platform
+  system: developer-portal

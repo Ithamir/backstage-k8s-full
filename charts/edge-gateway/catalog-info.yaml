@@ -1,0 +1,14 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: edge-gateway
+  description: Envoy Gateway resource routing external traffic to platform services.
+  annotations:
+    backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/charts/edge-gateway/
+    github.com/project-slug: Itamar-Ratson/backstage-k8s-full
+spec:
+  type: gateway
+  lifecycle: experimental
+  owner: platform
+  system: edge
