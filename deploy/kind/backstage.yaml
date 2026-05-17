@@ -2,6 +2,7 @@
 # These values are for local development only — do not use for other environments.
 image:
   repository: localhost:5001/backstage
+  pullPolicy: IfNotPresent
 
 github:
   auth:
