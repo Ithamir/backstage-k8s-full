@@ -1,0 +1,7 @@
+github:
+  auth:
+    create: true
+    token: ""
+postgres:
+  auth:
+    password: test-pass

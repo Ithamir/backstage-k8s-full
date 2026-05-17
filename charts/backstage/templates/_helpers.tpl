@@ -27,3 +27,19 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- define "backstage.image" -}}
 {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
 {{- end }}
+
+{{- define "backstage.githubSecretName" -}}
+{{- if .Values.github.auth.create }}
+{{- include "backstage.fullname" . }}-github
+{{- else }}
+{{- .Values.github.auth.existingSecret }}
+{{- end }}
+{{- end }}
+
+{{- define "backstage.postgresSecretName" -}}
+{{- if and .Values.postgres.enabled .Values.postgres.auth.create }}
+{{- include "backstage.fullname" . }}-postgres
+{{- else }}
+{{- .Values.postgres.auth.existingSecret }}
+{{- end }}
+{{- end }}

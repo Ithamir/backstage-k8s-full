@@ -30,9 +30,12 @@ service:
 
 github:
   auth:
-    token: TokenTokenTokenTokenMalkovichToken
+    create: true
+    existingSecret: ""
+    token: ""
 
 postgres:
+  enabled: true
   image:
     repository: postgres
     tag: "13.2-alpine"
@@ -47,8 +50,10 @@ postgres:
   storage:
     size: 2Gi
   auth:
+    create: true
+    existingSecret: ""
     username: backstage
-    password: hunter2
+    password: ""
     database: backstage
     host: postgres
     port: "5432"

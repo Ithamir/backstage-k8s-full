@@ -11,6 +11,7 @@
 !*.md
 !*.tpl
 !*.txt
+!*.sh
 
 # Allow specific files
 !.gitignore

@@ -40,9 +40,9 @@ spec:
               containerPort: 7007
           envFrom:
             - secretRef:
-                name: {{ include "backstage.fullname" . }}-postgres
+                name: {{ include "backstage.postgresSecretName" . }}
             - secretRef:
-                name: {{ include "backstage.fullname" . }}-github
+                name: {{ include "backstage.githubSecretName" . }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           {{- if .Values.probes.enabled }}

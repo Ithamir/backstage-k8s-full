@@ -1,0 +1,7 @@
+github:
+  auth:
+    token: test-token
+postgres:
+  enabled: false
+  auth:
+    existingSecret: external-pg-secret

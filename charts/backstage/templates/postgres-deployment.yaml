@@ -1,3 +1,4 @@
+{{- if .Values.postgres.enabled }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -31,7 +32,7 @@ spec:
             - containerPort: 5432
           envFrom:
             - secretRef:
-                name: {{ include "backstage.fullname" . }}-postgres
+                name: {{ include "backstage.postgresSecretName" . }}
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: postgresdb
@@ -42,3 +43,4 @@ spec:
         - name: postgresdb
           persistentVolumeClaim:
             claimName: {{ include "backstage.fullname" . }}-postgres
+{{- end }}
