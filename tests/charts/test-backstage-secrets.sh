@@ -1,49 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-CHART_DIR="charts/backstage"
-FIXTURES="tests/charts/fixtures"
-PASS=0
-FAIL=0
-
-assert_contains() {
-  local label="$1" output="$2" expected="$3"
-  if echo "$output" | grep -qF "$expected"; then
-    PASS=$((PASS + 1))
-  else
-    FAIL=$((FAIL + 1))
-    echo "FAIL: $label"
-    echo "  expected to contain: $expected"
-  fi
-}
-
-assert_not_contains() {
-  local label="$1" output="$2" unexpected="$3"
-  if ! echo "$output" | grep -qF "$unexpected"; then
-    PASS=$((PASS + 1))
-  else
-    FAIL=$((FAIL + 1))
-    echo "FAIL: $label"
-    echo "  expected NOT to contain: $unexpected"
-  fi
-}
-
-assert_fails() {
-  local label="$1" expected_msg="$2"
-  shift 2
-  local output
-  if output=$("$@" 2>&1); then
-    FAIL=$((FAIL + 1))
-    echo "FAIL: $label (expected failure but succeeded)"
-  elif echo "$output" | grep -qF "$expected_msg"; then
-    PASS=$((PASS + 1))
-  else
-    FAIL=$((FAIL + 1))
-    echo "FAIL: $label"
-    echo "  expected error containing: $expected_msg"
-    echo "  got: $output"
-  fi
-}
+# shellcheck source=helpers.sh
+source "$(dirname "$0")/helpers.sh"
 
 echo "=== GitHub auth hybrid tests ==="
 
@@ -56,15 +14,7 @@ assert_contains "deployment refs github secret" "$output" "name: backstage-githu
 # Test 2: create=false with existingSecret — no GitHub Secret rendered, Deployment references supplied name
 output=$(helm template backstage "$CHART_DIR" -f "$FIXTURES/github-existing-secret.yaml" 2>&1)
 assert_contains "deployment refs existingSecret" "$output" "name: my-gh-secret"
-
-# Verify the github Secret resource is truly absent
-github_secret_count=$(echo "$output" | grep -c "name: backstage-github" || true)
-if [ "$github_secret_count" -eq 0 ]; then
-  PASS=$((PASS + 1))
-else
-  FAIL=$((FAIL + 1))
-  echo "FAIL: github create=false should not render backstage-github Secret"
-fi
+assert_not_contains "github create=false should not render backstage-github Secret" "$output" "name: backstage-github"
 
 # Test 3: create=true with empty token fails with required message
 assert_fails "github empty token fails" "github.auth.token is required" \
@@ -83,14 +33,7 @@ assert_contains "postgres Secret has POSTGRES_HOST" "$output" "POSTGRES_HOST:"
 # Test 5: create=false with existingSecret — no postgres Secret rendered, Deployment references supplied name
 output=$(helm template backstage "$CHART_DIR" -f "$FIXTURES/postgres-existing-secret.yaml" 2>&1)
 assert_contains "backstage deployment refs pg existingSecret" "$output" "name: my-pg-secret"
-
-postgres_secret_count=$(echo "$output" | grep -c "POSTGRES_USER:" || true)
-if [ "$postgres_secret_count" -eq 0 ]; then
-  PASS=$((PASS + 1))
-else
-  FAIL=$((FAIL + 1))
-  echo "FAIL: postgres create=false should not render postgres Secret data keys"
-fi
+assert_not_contains "postgres create=false should not render postgres Secret data keys" "$output" "POSTGRES_USER:"
 
 # Test 6: create=true with empty password fails with required message
 assert_fails "postgres empty password fails" "postgres.auth.password is required" \
