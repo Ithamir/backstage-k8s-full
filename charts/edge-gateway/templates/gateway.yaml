@@ -10,10 +10,10 @@ spec:
     - name: http
       protocol: HTTP
       port: 80
-      hostname: {{ .Values.hostname }}
+      hostname: {{ .Values.hostname | quote }}
       allowedRoutes:
         namespaces:
-          from: {{ .Values.allowedRoutes.namespaces.from }}
+          from: Selector
           selector:
             matchLabels:
-              {{- toYaml .Values.allowedRoutes.namespaces.selector.matchLabels | nindent 14 }}
+              {{ .Values.allowedRoutes.label.key }}: {{ .Values.allowedRoutes.label.value }}

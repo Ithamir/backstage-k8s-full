@@ -28,6 +28,7 @@ smoke: tf-check charts-lint charts-test
 		--kube-context $(KUBE_CONTEXT) \
 		-f deploy/kind/edge-gateway.yaml
 	kubectl create namespace $(BACKSTAGE_NS) --dry-run=client -o yaml | kubectl apply -f - --context $(KUBE_CONTEXT)
+	kubectl label namespace $(BACKSTAGE_NS) gateway-routes=enabled --overwrite --context $(KUBE_CONTEXT)
 	helm upgrade --install backstage charts/backstage \
 		--namespace $(BACKSTAGE_NS) --wait --timeout 5m \
 		--kube-context $(KUBE_CONTEXT) \

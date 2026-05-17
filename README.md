@@ -110,8 +110,9 @@ helm upgrade --install edge-gateway charts/edge-gateway \
   --kube-context kind-backstage \
   -f deploy/kind/edge-gateway.yaml
 
-# Pre-create the backstage namespace (idempotent)
+# Pre-create the backstage namespace and apply the opt-in label (idempotent)
 kubectl create namespace backstage --dry-run=client -o yaml | kubectl apply -f - --context kind-backstage
+kubectl label namespace backstage gateway-routes=enabled --overwrite --context kind-backstage
 
 # Install backstage
 helm upgrade --install backstage charts/backstage \
@@ -119,6 +120,8 @@ helm upgrade --install backstage charts/backstage \
   --kube-context kind-backstage \
   -f deploy/kind/backstage.yaml
 ```
+
+**Namespace label requirement:** Any app fronting the shared edge-gateway must have its namespace labeled with `gateway-routes=enabled`. The Gateway uses a label-selector `allowedRoutes` policy — only HTTPRoutes in namespaces carrying this label are admitted. The Makefile applies this label automatically as part of `make smoke`.
 
 Or simply run the full smoke test which performs all of the above:
 
