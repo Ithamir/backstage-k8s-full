@@ -1,0 +1,58 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Domain
+metadata:
+  name: platform
+  description: Platform infrastructure for the developer portal and supporting services.
+  annotations:
+    backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/
+    github.com/project-slug: Itamar-Ratson/backstage-k8s-full
+spec:
+  owner: platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: developer-portal
+  description: Backstage-based developer portal providing a software catalog, scaffolder, and documentation hub.
+  annotations:
+    backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/backstage/
+    github.com/project-slug: Itamar-Ratson/backstage-k8s-full
+spec:
+  owner: platform
+  domain: platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: edge
+  description: Edge networking layer providing ingress and routing via Envoy Gateway.
+  annotations:
+    backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/charts/edge-gateway/
+    github.com/project-slug: Itamar-Ratson/backstage-k8s-full
+spec:
+  owner: platform
+  domain: platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: platform
+  description: Platform engineering team responsible for infrastructure and developer tooling.
+  annotations:
+    backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/
+    github.com/project-slug: Itamar-Ratson/backstage-k8s-full
+spec:
+  type: team
+  children: []
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: itamar
+  annotations:
+    backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/
+    github.com/project-slug: Itamar-Ratson/backstage-k8s-full
+spec:
+  memberOf:
+    - platform

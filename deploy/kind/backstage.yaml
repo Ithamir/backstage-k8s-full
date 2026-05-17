@@ -6,11 +6,17 @@ image:
 
 github:
   auth:
-    create: true
-    token: placeholder-github-token-for-local-dev
+    create: false
+    existingSecret: backstage-github-token
 
 postgres:
   enabled: true
   auth:
     create: true
     password: hunter2
+
+appConfig:
+  catalog:
+    locations:
+      - type: url
+        target: https://github.com/Itamar-Ratson/backstage-k8s-full/blob/main/**/catalog-info.yaml

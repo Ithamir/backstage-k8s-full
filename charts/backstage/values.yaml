@@ -30,7 +30,7 @@ service:
 
 github:
   auth:
-    create: true
+    create: false
     existingSecret: ""
     token: ""
 
@@ -84,14 +84,6 @@ appConfig:
       guest:
         dangerouslyAllowOutsideDevelopment: true
   catalog:
-    locations:
-      - type: file
-        target: ./examples/entities.yaml
-      - type: file
-        target: ./examples/template/template.yaml
-        rules:
-          - allow: [Template]
-      - type: file
-        target: ./examples/org.yaml
-        rules:
-          - allow: [User, Group]
+    rules:
+      - allow: [Component, System, API, Resource, Location, Domain, User, Group]
+    locations: []

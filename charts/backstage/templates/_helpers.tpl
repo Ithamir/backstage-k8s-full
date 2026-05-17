@@ -32,7 +32,7 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- if .Values.github.auth.create }}
 {{- include "backstage.fullname" . }}-github
 {{- else }}
-{{- .Values.github.auth.existingSecret }}
+{{- required "github.auth.existingSecret is required when github.auth.create=false" .Values.github.auth.existingSecret }}
 {{- end }}
 {{- end }}
 

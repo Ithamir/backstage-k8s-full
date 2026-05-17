@@ -59,9 +59,37 @@ Two files in your generated `backstage/` directory need to be replaced or added.
 | `backstage/Dockerfile` | Multi-stage build that compiles everything inside Docker |
 | `backstage/.dockerignore` | Must NOT exclude source files (unlike the host build version) |
 
+After scaffolding, install the GitHub catalog discovery backend module:
+
+```bash
+cd backstage
+yarn --cwd packages/backend add @backstage/plugin-catalog-backend-module-github
+```
+
+Then add this import to `packages/backend/src/index.ts`:
+
+```typescript
+backend.add(import('@backstage/plugin-catalog-backend-module-github'));
+```
+
+This enables the catalog to discover `catalog-info.yaml` files from GitHub via URL discovery.
+
 Key configuration notes:
 
 `backstage/.dockerignore` must NOT exclude `packages/*/src`. The default from `create-app` excludes source files, which causes `yarn tsc` to fail with "No inputs were found".
+
+For local development with `yarn dev`, create `backstage/app-config.local.yaml` (gitignored) to load catalog entities from the repo without needing a GitHub token:
+
+```yaml
+catalog:
+  locations:
+    - type: file
+      target: ../../catalog-info.yaml
+    - type: file
+      target: ../catalog-info.yaml
+    - type: file
+      target: ../../charts/edge-gateway/catalog-info.yaml
+```
 
 Production app-config is no longer baked into the image. Instead, the Helm chart renders a ConfigMap from `values.appConfig` and mounts it into the pod at runtime via `--config /etc/backstage/app-config.runtime.yaml`. To change runtime configuration, edit `deploy/kind/backstage.yaml` (or the chart's `values.appConfig` defaults) and run `helm upgrade` — no image rebuild required.
 
@@ -99,7 +127,30 @@ docker push localhost:5001/backstage:1.0.0
 
 The image is now available to the cluster via the registry — no manual image loading required.
 
-## Step 5: Deploy with Helm
+## Step 5: Create the GitHub PAT Secret
+
+Backstage discovers catalog entities from this GitHub repo at runtime. It needs a fine-grained Personal Access Token (PAT) to read from the (private) repository.
+
+1. Create a **fine-grained PAT** at <https://github.com/settings/personal-access-tokens/new>:
+   - **Repository access:** Only select `Itamar-Ratson/backstage-k8s-full`
+   - **Permissions:** `Contents: Read` (plus auto-granted `Metadata: Read`)
+
+2. Create the Kubernetes secret:
+
+```bash
+kubectl create namespace backstage --dry-run=client -o yaml | kubectl apply -f - --context kind-backstage
+kubectl create secret generic backstage-github-token \
+  --from-literal=GITHUB_TOKEN="$GITHUB_TOKEN" \
+  -n backstage --context kind-backstage
+```
+
+Verify:
+
+```bash
+kubectl get secret backstage-github-token -n backstage --context kind-backstage
+```
+
+## Step 6: Deploy with Helm
 
 Install the edge-gateway chart (shared Gateway resource) and then the backstage chart:
 
@@ -129,7 +180,7 @@ Or simply run the full smoke test which performs all of the above:
 make smoke
 ```
 
-## Step 6: Access Backstage
+## Step 7: Access Backstage
 
 Open <http://backstage.localtest.me:8080> in your browser. No port-forwarding required.
 
@@ -211,15 +262,13 @@ make charts-lint
 
 1. **Configure a production auth provider** — Replace guest auth with GitHub, Google, Okta, or another provider. See the [Authentication documentation](https://backstage.io/docs/auth/).
 
-2. **Add catalog entities** — Populate the software catalog with your services, APIs, and documentation.
+2. **Configure the Kubernetes plugin** — Add `backstage.io/kubernetes-id` annotations to Components and enable viewing running pods from within Backstage.
 
-3. **Configure the Kubernetes plugin** — Enable viewing Kubernetes resources from within Backstage.
+3. **Set up TechDocs** — Add `backstage.io/techdocs-ref` annotations and enable documentation generation and viewing.
 
-4. **Set up TechDocs** — Enable documentation generation and viewing.
+4. **Deploy to a production cluster** — Move beyond KinD to EKS, GKE, or another managed Kubernetes service.
 
-5. **Deploy to a production cluster** — Move beyond KinD to EKS, GKE, or another managed Kubernetes service.
-
-6. **Add HTTPS** — Configure cert-manager or mkcert for TLS termination at the Gateway.
+5. **Add HTTPS** — Configure cert-manager or mkcert for TLS termination at the Gateway.
 
 ## Architecture Decision
 
