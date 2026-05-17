@@ -7,8 +7,8 @@ resource "kind_cluster" "this" {
 
     containerd_config_patches = [
       <<-TOML
-      [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5001"]
-        endpoint = ["http://kind-registry:5000"]
+      [plugins."io.containerd.grpc.v1.cri".registry]
+        config_path = "/etc/containerd/certs.d"
       TOML
     ]
 
