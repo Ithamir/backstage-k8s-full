@@ -19,6 +19,25 @@
 !.dockerignore
 !Makefile
 
+# Backstage app source (scaffolded, needed for build + yarn dev)
+!backstage/.yarnrc.yml
+!backstage/.yarn/releases/**
+!backstage/.eslintignore
+!backstage/.eslintrc.js
+!backstage/.prettierignore
+!backstage/backstage.json
+!backstage/package.json
+!backstage/yarn.lock
+!backstage/tsconfig.json
+!backstage/playwright.config.ts
+!backstage/app-config.production.yaml
+!backstage/packages/**/*.ts
+!backstage/packages/**/*.tsx
+!backstage/packages/**/*.json
+!backstage/packages/**/*.js
+!backstage/packages/**/*.html
+!backstage/packages/app/public/**
+
 # Terraform state and cache (override folder allowlist)
 terraform/.terraform/**
 terraform/terraform.tfstate
