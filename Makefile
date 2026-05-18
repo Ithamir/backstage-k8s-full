@@ -25,6 +25,7 @@ charts-test:
 	./tests/charts/test-backstage-catalog-config.sh
 	./tests/charts/test-backstage-mkdocs-image-toolchain.sh
 	./tests/charts/test-backstage-techdocs-config.sh
+	./tests/charts/test-helm-chart-techdocs-scaffold.sh
 
 docs-lint:
 	@for site in $(SITES); do \
