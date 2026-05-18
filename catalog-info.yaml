@@ -18,6 +18,7 @@ metadata:
   description: Backstage-based developer portal providing a software catalog, scaffolder, and documentation hub.
   annotations:
     backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/backstage/
+    backstage.io/techdocs-ref: dir:.
     github.com/project-slug: Itamar-Ratson/backstage-k8s-full
 spec:
   owner: platform
