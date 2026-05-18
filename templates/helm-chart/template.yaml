@@ -4,6 +4,8 @@ metadata:
   name: helm-chart
   title: New Helm Chart
   description: Scaffold a workload Helm chart and catalog entry as a pull request.
+  annotations:
+    backstage.io/techdocs-ref: dir:.
   tags:
     - helm
     - kubernetes
