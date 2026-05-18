@@ -42,30 +42,28 @@ spec:
           decommission. Expected annotation
           `backstage.io/managed-by-template: helm-chart`.
 
+    - id: collectBlockingRelations
+      name: Collect blocking dependents
+      action: util:filterByAttribute
+      input:
+        items: ${{ steps.fetchEntity.output.entity.relations }}
+        attribute: type
+        values:
+          - dependencyOf
+          - hasSubcomponent
+          - apiConsumedBy
+          - apiProvidedBy
+        extract: targetRef
+
     - id: assertNoBlockingRelations
       name: Assert no blocking dependents
       action: util:assert
       input:
-        condition: >-
-          ${{
-            (steps.fetchEntity.output.entity.relations || [])
-              .filter(relation =>
-                ['dependencyOf', 'hasSubcomponent', 'apiConsumedBy', 'apiProvidedBy']
-                  .includes(relation.type),
-              ).length === 0
-          }}
+        condition: ${{ steps.collectBlockingRelations.output.count === 0 }}
         message: >-
           Cannot decommission `${{ steps.fetchEntity.output.entity.metadata.name }}`
           because these catalog entities still depend on it:
-          ${{
-            (steps.fetchEntity.output.entity.relations || [])
-              .filter(relation =>
-                ['dependencyOf', 'hasSubcomponent', 'apiConsumedBy', 'apiProvidedBy']
-                  .includes(relation.type),
-              )
-              .map(relation => relation.targetRef)
-              .join(', ')
-          }}
+          ${{ steps.collectBlockingRelations.output.extracted | join(', ') }}
 
     - id: fetchChartDirectory
       name: Fetch chart directory

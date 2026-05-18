@@ -2,6 +2,7 @@ import { createBackendModule } from '@backstage/backend-plugin-api';
 import { scaffolderActionsExtensionPoint } from '@backstage/plugin-scaffolder-node/alpha';
 
 import { createAssertAction } from './assert';
+import { createFilterByAttributeAction } from './filterByAttribute';
 
 export const scaffolderUtilActionsModule = createBackendModule({
   pluginId: 'scaffolder',
@@ -12,7 +13,10 @@ export const scaffolderUtilActionsModule = createBackendModule({
         scaffolder: scaffolderActionsExtensionPoint,
       },
       async init({ scaffolder }) {
-        scaffolder.addActions(createAssertAction());
+        scaffolder.addActions(
+          createAssertAction(),
+          createFilterByAttributeAction(),
+        );
       },
     });
   },

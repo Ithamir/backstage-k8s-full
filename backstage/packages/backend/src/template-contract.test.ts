@@ -1,6 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+// nunjucks ships no TypeScript types; this is a test-only import.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const nunjucks = require('nunjucks') as {
+  configure: (opts: object) => { renderString: (str: string, ctx: object) => string };
+};
+
 const repoRoot = path.resolve(__dirname, '../../../../');
 const repoSlug = 'Itamar-Ratson/backstage-k8s-full';
 const repoUrl = `https://github.com/${repoSlug}`;
@@ -84,6 +90,7 @@ describe('helm chart decommission template contract', () => {
           'filesToDelete:',
           'targetBranchName: main',
           'action: util:assert',
+          'action: util:filterByAttribute',
           'action: catalog:fetch',
           'action: fetch:plain',
           'action: fs:readdir',
@@ -112,4 +119,68 @@ describe('helm chart decommission template contract', () => {
       readme.indexOf(techDocsSection),
     );
   });
+
+  it('renders every util:assert condition in the template to a real boolean', () => {
+    const templateSource = readRepoFile(decommissionTemplatePath);
+    const conditions = extractAssertConditions(templateSource);
+    expect(conditions.length).toBeGreaterThan(0);
+
+    const env = nunjucks.configure({
+      autoescape: false,
+      tags: { variableStart: '${{', variableEnd: '}}' },
+    });
+
+    const sampleContext = {
+      parameters: { component: 'component:default/test-01' },
+      steps: {
+        fetchEntity: {
+          output: {
+            entity: {
+              metadata: {
+                name: 'test-01',
+                annotations: { 'backstage.io/managed-by-template': 'helm-chart' },
+              },
+            },
+          },
+        },
+        collectBlockingRelations: {
+          output: { count: 0, matches: [], extracted: [] },
+        },
+      },
+    };
+
+    for (const condition of conditions) {
+      const rendered = JSON.parse(
+        env.renderString(`\${{ (${condition}) | dump }}`, sampleContext),
+      ) as unknown;
+      expect(typeof rendered).toBe('boolean');
+    }
+  });
 });
+
+function extractAssertConditions(templateSource: string): string[] {
+  const lines = templateSource.split('\n');
+  const conditions: string[] = [];
+  let insideAssertInput = false;
+
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (/action:\s+util:assert\b/.test(line)) {
+      insideAssertInput = true;
+      continue;
+    }
+    if (!insideAssertInput) continue;
+
+    const match = line.match(/condition:\s*\$\{\{\s*(.*?)\s*\}\}\s*$/);
+    if (match) {
+      conditions.push(match[1]);
+      insideAssertInput = false;
+      continue;
+    }
+    if (/^\s*- id:/.test(line)) {
+      insideAssertInput = false;
+    }
+  }
+
+  return conditions;
+}
