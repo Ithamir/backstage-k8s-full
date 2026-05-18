@@ -1,0 +1,5 @@
+apiVersion: v2
+name: test-03
+description: create for testing the decomission 
+type: application
+version: 0.1.0
