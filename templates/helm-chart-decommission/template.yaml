@@ -4,6 +4,8 @@ metadata:
   name: helm-chart-decommission
   title: Decommission Helm Chart
   description: Open a pull request that removes a scaffolded workload Helm chart.
+  annotations:
+    backstage.io/techdocs-ref: dir:.
   tags:
     - helm
     - kubernetes
