@@ -83,6 +83,13 @@ spec:
           - charts/${{ steps.fetchEntity.output.entity.metadata.name }}
         recursive: true
 
+    - id: extractChartFilePaths
+      name: Extract chart file paths
+      action: util:filterByAttribute
+      input:
+        items: ${{ steps.listChartFiles.output.files }}
+        extract: path
+
     - id: deleteWorkspaceCopy
       name: Delete workspace copy
       action: fs:delete
@@ -107,7 +114,7 @@ spec:
           - Requesting user: `${{ user.ref or 'unknown' }}`
 
           Warning: this pull request only removes repository files. The running Helm release will NOT be uninstalled automatically. The requester must run `helm uninstall ${{ steps.fetchEntity.output.entity.metadata.name }} -n <namespace>` manually until ArgoCD lands.
-        filesToDelete: ${{ steps.listChartFiles.output.files.map(file => file.path) }}
+        filesToDelete: ${{ steps.extractChartFilePaths.output.extracted }}
         draft: false
   output:
     links:

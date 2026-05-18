@@ -6,7 +6,7 @@ export function createFilterByAttributeAction() {
   return createTemplateAction({
     id: filterByAttributeActionId,
     description:
-      'Filters a list of objects, keeping those whose named attribute matches one of the provided values. Optionally extracts a string attribute from each match.',
+      'Filters a list of objects, keeping those whose named attribute matches one of the provided values. Optionally extracts a string attribute from each match. When `values` is omitted, no filter is applied and every item is kept — useful as a pure extraction step.',
     schema: {
       input: {
         items: z =>
@@ -15,9 +15,19 @@ export function createFilterByAttributeAction() {
             .optional()
             .describe('Objects to filter. Defaults to an empty list.'),
         attribute: z =>
-          z.string().describe('Object key whose value is matched against `values`.'),
+          z
+            .string()
+            .optional()
+            .describe(
+              'Object key whose value is matched against `values`. Required when `values` is provided.',
+            ),
         values: z =>
-          z.array(z.string()).describe('Allowed string values for the named attribute.'),
+          z
+            .array(z.string())
+            .optional()
+            .describe(
+              'Allowed string values for the named attribute. When omitted, no filter is applied and every item passes through.',
+            ),
         extract: z =>
           z
             .string()
@@ -42,12 +52,19 @@ export function createFilterByAttributeAction() {
     },
     async handler(ctx) {
       const { items = [], attribute, values, extract } = ctx.input;
-      const allowed = new Set(values);
 
-      const matches = items.filter(item => {
-        const value = item[attribute];
-        return typeof value === 'string' && allowed.has(value);
-      });
+      if (values !== undefined && attribute === undefined) {
+        throw new Error(
+          '`attribute` is required when `values` is provided to util:filterByAttribute.',
+        );
+      }
+
+      const matches = values
+        ? items.filter(item => {
+            const value = item[attribute as string];
+            return typeof value === 'string' && values.includes(value);
+          })
+        : items;
 
       const extracted = extract
         ? matches

@@ -2,8 +2,8 @@ import { createFilterByAttributeAction } from './filterByAttribute';
 
 type FilterByAttributeInput = {
   items?: Array<Record<string, unknown>>;
-  attribute: string;
-  values: string[];
+  attribute?: string;
+  values?: string[];
   extract?: string;
 };
 
@@ -75,6 +75,38 @@ describe('createFilterByAttributeAction', () => {
     expect(outputs.count).toBe(0);
     expect(outputs.matches).toEqual([]);
     expect(outputs.extracted).toEqual([]);
+  });
+
+  it('keeps every item and extracts the attribute when values is omitted', async () => {
+    const { ctx, outputs } = createActionContext({
+      items: [
+        { name: 'Chart.yaml', path: 'charts/foo/Chart.yaml' },
+        { name: 'values.yaml', path: 'charts/foo/values.yaml' },
+        { name: 'service.yaml', path: 'charts/foo/templates/service.yaml' },
+      ],
+      attribute: 'path',
+      values: undefined,
+      extract: 'path',
+    });
+
+    await action.handler(ctx);
+
+    expect(outputs.count).toBe(3);
+    expect(outputs.extracted).toEqual([
+      'charts/foo/Chart.yaml',
+      'charts/foo/values.yaml',
+      'charts/foo/templates/service.yaml',
+    ]);
+  });
+
+  it('rejects values without an attribute', async () => {
+    const { ctx } = createActionContext({
+      items: [{ path: 'irrelevant' }],
+      attribute: undefined as unknown as string,
+      values: ['x'],
+    });
+
+    await expect(action.handler(ctx)).rejects.toThrow(/attribute.*required/);
   });
 
   it('skips items whose attribute value is not a string', async () => {
