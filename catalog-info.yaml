@@ -56,3 +56,15 @@ metadata:
 spec:
   memberOf:
     - platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: helm-chart-template
+  description: Backstage scaffolder template for workload Helm charts.
+  annotations:
+    backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/blob/main/templates/helm-chart/template.yaml
+    github.com/project-slug: Itamar-Ratson/backstage-k8s-full
+spec:
+  type: url
+  target: https://github.com/Itamar-Ratson/backstage-k8s-full/blob/main/templates/helm-chart/template.yaml
