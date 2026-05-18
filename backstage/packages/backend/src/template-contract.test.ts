@@ -2,6 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const repoRoot = path.resolve(__dirname, '../../../../');
+const repoSlug = 'Itamar-Ratson/backstage-k8s-full';
+const repoUrl = `https://github.com/${repoSlug}`;
+const chartTemplatePath = 'templates/helm-chart/template.yaml';
+const chartCatalogPath = 'templates/helm-chart/skeleton/catalog-info.yaml';
+const readmePath = 'README.md';
 
 function readRepoFile(relativePath: string) {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
@@ -9,27 +14,47 @@ function readRepoFile(relativePath: string) {
 
 describe('helm chart template contract', () => {
   it('registers the template and publishes the expected scaffold', () => {
-    const rootCatalog = readRepoFile('catalog-info.yaml');
-    expect(rootCatalog).toContain('kind: Location');
-    expect(rootCatalog).toContain('target: https://github.com/Itamar-Ratson/backstage-k8s-full/blob/main/templates/helm-chart/template.yaml');
+    const fileExpectations = [
+      {
+        path: 'catalog-info.yaml',
+        snippets: [
+          'kind: Location',
+          `target: ${repoUrl}/blob/main/templates/helm-chart/template.yaml`,
+        ],
+      },
+      {
+        path: chartTemplatePath,
+        snippets: [
+          'kind: Template',
+          'title: New Helm Chart',
+          'branchName: scaffold/helm-chart/${{ parameters.name }}',
+          'draft: false',
+          'targetPath: charts/${{ parameters.name }}',
+        ],
+      },
+      {
+        path: chartCatalogPath,
+        snippets: [
+          'lifecycle: experimental',
+          'backstage.io/kubernetes-id: ${{ values.name }}',
+          `github.com/project-slug: ${repoSlug}`,
+          `backstage.io/source-location: url:${repoUrl}/tree/main/charts/` +
+            '${{ values.name }}/',
+        ],
+      },
+    ] as const;
 
-    const template = readRepoFile('templates/helm-chart/template.yaml');
-    expect(template).toContain('kind: Template');
-    expect(template).toContain('title: New Helm Chart');
-    expect(template).toContain('branchName: scaffold/helm-chart/${{ parameters.name }}');
-    expect(template).toContain('draft: false');
-    expect(template).toContain('targetPath: charts/${{ parameters.name }}');
+    for (const { path: relativePath, snippets } of fileExpectations) {
+      const contents = readRepoFile(relativePath);
+      for (const snippet of snippets) {
+        expect(contents).toContain(snippet);
+      }
+    }
 
-    const catalogInfo = readRepoFile('templates/helm-chart/skeleton/catalog-info.yaml');
-    expect(catalogInfo).toContain('lifecycle: experimental');
-    expect(catalogInfo).toContain('backstage.io/kubernetes-id: ${{ values.name }}');
-    expect(catalogInfo).toContain('github.com/project-slug: Itamar-Ratson/backstage-k8s-full');
-    expect(catalogInfo).toContain('backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/charts/${{ values.name }}/');
-
-    const readme = readRepoFile('README.md');
-    expect(readme).toContain('**Add the Helm chart scaffolder template**');
-    expect(readme.indexOf('**Add the Helm chart scaffolder template**')).toBeLessThan(
-      readme.indexOf('**Set up TechDocs**'),
-    );
+    const readme = readRepoFile(readmePath);
+    const templateSection = '**Add the Helm chart scaffolder template**';
+    const techDocsSection = '**Set up TechDocs**';
+    expect(readme).toContain(templateSection);
+    expect(readme.indexOf(templateSection)).toBeLessThan(readme.indexOf(techDocsSection));
   });
 });
