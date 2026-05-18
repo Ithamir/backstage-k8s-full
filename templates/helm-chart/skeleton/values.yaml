@@ -1,0 +1,21 @@
+nameOverride: ""
+fullnameOverride: ""
+
+replicaCount: 1
+
+image: ${{ values.image }}
+
+host: ${{ values.host }}
+port: ${{ values.port }}
+
+gateway:
+  name: edge-gateway
+  namespace: gateway
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
