@@ -21,6 +21,7 @@ charts-test:
 	./tests/charts/test-backstage-secrets.sh
 	./tests/charts/test-backstage-configmap.sh
 	./tests/charts/test-backstage-catalog-config.sh
+	./tests/charts/test-backstage-mkdocs-image-toolchain.sh
 
 smoke: tf-check charts-lint charts-test
 	terraform -chdir=terraform apply -auto-approve
