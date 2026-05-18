@@ -18,10 +18,7 @@ ENV PYTHON=/usr/bin/python3
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && \
-  apt-get install -y --no-install-recommends python3 python3-pip g++ build-essential libsqlite3-dev && \
-  pip3 install --break-system-packages \
-    mkdocs-techdocs-core==1.6.2 \
-    mkdocs-mermaid2-plugin==1.2.3
+  apt-get install -y --no-install-recommends python3 g++ build-essential libsqlite3-dev
 
 USER node
 WORKDIR /app
@@ -48,7 +45,10 @@ ENV PYTHON=/usr/bin/python3
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && \
-  apt-get install -y --no-install-recommends python3 g++ build-essential libsqlite3-dev
+  apt-get install -y --no-install-recommends python3 python3-pip g++ build-essential libsqlite3-dev && \
+  pip3 install --break-system-packages \
+    mkdocs-techdocs-core==1.6.2 \
+    mkdocs-mermaid2-plugin==1.2.3
 
 USER node
 WORKDIR /app
