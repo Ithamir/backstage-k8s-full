@@ -267,13 +267,15 @@ make charts-lint
 
 1. **Configure a production auth provider** — Replace guest auth with GitHub, Google, Okta, or another provider. See the [Authentication documentation](https://backstage.io/docs/auth/).
 
-2. **Configure the Kubernetes plugin** — Add `backstage.io/kubernetes-id` annotations to Components and enable viewing running pods from within Backstage.
+2. **Add the Helm chart scaffolder template** — Use Backstage to scaffold new workload charts and publish them as pull requests instead of copying `charts/` by hand.
 
-3. **Set up TechDocs** — Add `backstage.io/techdocs-ref` annotations and enable documentation generation and viewing.
+3. **Configure the Kubernetes plugin** — Add `backstage.io/kubernetes-id` annotations to Components and enable viewing running pods from within Backstage.
 
-4. **Deploy to a production cluster** — Move beyond KinD to EKS, GKE, or another managed Kubernetes service.
+4. **Set up TechDocs** — Add `backstage.io/techdocs-ref` annotations and enable documentation generation and viewing.
 
-5. **Add HTTPS** — Configure cert-manager or mkcert for TLS termination at the Gateway.
+5. **Deploy to a production cluster** — Move beyond KinD to EKS, GKE, or another managed Kubernetes service.
+
+6. **Add HTTPS** — Configure cert-manager or mkcert for TLS termination at the Gateway.
 
 ## Architecture Decision
 
