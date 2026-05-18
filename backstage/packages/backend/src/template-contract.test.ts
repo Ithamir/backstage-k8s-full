@@ -5,7 +5,7 @@ const repoRoot = path.resolve(__dirname, '../../../../');
 const repoSlug = 'Itamar-Ratson/backstage-k8s-full';
 const repoUrl = `https://github.com/${repoSlug}`;
 const chartTemplatePath = 'templates/helm-chart/template.yaml';
-const chartCatalogPath = 'templates/helm-chart/skeleton/catalog-info.yaml';
+const chartCatalogPath = 'templates/helm-chart/skeleton/catalog-info.yaml.njk';
 const readmePath = 'README.md';
 
 function readRepoFile(relativePath: string) {

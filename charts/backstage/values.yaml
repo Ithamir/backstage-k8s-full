@@ -85,5 +85,5 @@ appConfig:
         dangerouslyAllowOutsideDevelopment: true
   catalog:
     rules:
-      - allow: [Component, System, API, Resource, Location, Domain, User, Group]
+      - allow: [Component, System, API, Resource, Location, Domain, User, Group, Template]
     locations: []

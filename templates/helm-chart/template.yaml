@@ -71,6 +71,7 @@ spec:
       input:
         url: ./skeleton
         targetPath: charts/${{ parameters.name }}
+        templateFileExtension: '.njk'
         values:
           name: ${{ parameters.name }}
           description: ${{ parameters.description }}
@@ -86,7 +87,7 @@ spec:
         repoUrl: github.com?owner=Itamar-Ratson&repo=backstage-k8s-full
         branchName: scaffold/helm-chart/${{ parameters.name }}
         targetBranchName: main
-        title: Scaffold new chart: ${{ parameters.name }}
+        title: "Scaffold new chart: ${{ parameters.name }}"
         description: |
           Scaffolded workload chart generated from Backstage.
 
