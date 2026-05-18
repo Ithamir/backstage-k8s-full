@@ -6,6 +6,7 @@
 
 # Allow file types
 !*.yaml
+!*.yml
 !*.tf
 !*.hcl
 !*.md

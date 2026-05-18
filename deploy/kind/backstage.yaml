@@ -16,6 +16,12 @@ postgres:
     password: hunter2
 
 appConfig:
+  techdocs:
+    builder: local
+    generator:
+      runIn: local
+    publisher:
+      type: local
   catalog:
     locations:
       - type: url
