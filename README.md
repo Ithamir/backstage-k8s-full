@@ -269,13 +269,15 @@ make charts-lint
 
 2. **Add the Helm chart scaffolder template** — Use Backstage to scaffold new workload charts and publish them as pull requests instead of copying `charts/` by hand.
 
-3. **Configure the Kubernetes plugin** — Add `backstage.io/kubernetes-id` annotations to Components and enable viewing running pods from within Backstage.
+3. **Decommission a scaffolded Helm chart** — Use the `helm-chart-decommission` template to select a catalog Component, verify it was created by `helm-chart`, block removal when dependents still reference it, and open a PR deleting `charts/<name>/`. Merging that PR removes the entity from catalog discovery on the next refresh. The template does not uninstall the running release; do that manually with `helm uninstall <name> -n <namespace>` until ArgoCD lands.
 
-4. **Set up TechDocs** — Add `backstage.io/techdocs-ref` annotations and enable documentation generation and viewing.
+4. **Configure the Kubernetes plugin** — Add `backstage.io/kubernetes-id` annotations to Components and enable viewing running pods from within Backstage.
 
-5. **Deploy to a production cluster** — Move beyond KinD to EKS, GKE, or another managed Kubernetes service.
+5. **Set up TechDocs** — Add `backstage.io/techdocs-ref` annotations and enable documentation generation and viewing.
 
-6. **Add HTTPS** — Configure cert-manager or mkcert for TLS termination at the Gateway.
+6. **Deploy to a production cluster** — Move beyond KinD to EKS, GKE, or another managed Kubernetes service.
+
+7. **Add HTTPS** — Configure cert-manager or mkcert for TLS termination at the Gateway.
 
 ## Architecture Decision
 

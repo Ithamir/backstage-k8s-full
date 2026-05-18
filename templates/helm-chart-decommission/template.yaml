@@ -1,0 +1,117 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: helm-chart-decommission
+  title: Decommission Helm Chart
+  description: Open a pull request that removes a scaffolded workload Helm chart.
+  tags:
+    - helm
+    - kubernetes
+    - scaffolder
+    - decommission
+spec:
+  owner: platform
+  type: service
+  parameters:
+    - title: Helm chart decommission details
+      required:
+        - component
+      properties:
+        component:
+          title: Component
+          type: string
+          description: Catalog component to decommission.
+          ui:field: EntityPicker
+          ui:options:
+            allowedKinds:
+              - Component
+  steps:
+    - id: fetchEntity
+      name: Fetch catalog entity
+      action: catalog:fetch
+      input:
+        entityRef: ${{ parameters.component }}
+
+    - id: assertManagedByTemplate
+      name: Assert template marker
+      action: util:assert
+      input:
+        condition: ${{ steps.fetchEntity.output.entity.metadata.annotations['backstage.io/managed-by-template'] === 'helm-chart' }}
+        message: >-
+          Component `${{ parameters.component }}` is not eligible for helm chart
+          decommission. Expected annotation
+          `backstage.io/managed-by-template: helm-chart`.
+
+    - id: assertNoBlockingRelations
+      name: Assert no blocking dependents
+      action: util:assert
+      input:
+        condition: >-
+          ${{
+            (steps.fetchEntity.output.entity.relations || [])
+              .filter(relation =>
+                ['dependencyOf', 'hasSubcomponent', 'apiConsumedBy', 'apiProvidedBy']
+                  .includes(relation.type),
+              ).length === 0
+          }}
+        message: >-
+          Cannot decommission `${{ steps.fetchEntity.output.entity.metadata.name }}`
+          because these catalog entities still depend on it:
+          ${{
+            (steps.fetchEntity.output.entity.relations || [])
+              .filter(relation =>
+                ['dependencyOf', 'hasSubcomponent', 'apiConsumedBy', 'apiProvidedBy']
+                  .includes(relation.type),
+              )
+              .map(relation => relation.targetRef)
+              .join(', ')
+          }}
+
+    - id: fetchChartDirectory
+      name: Fetch chart directory
+      action: fetch:plain
+      input:
+        url: >-
+          https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/charts/${{
+            steps.fetchEntity.output.entity.metadata.name
+          }}/
+        targetPath: charts/${{ steps.fetchEntity.output.entity.metadata.name }}
+
+    - id: listChartFiles
+      name: List chart files
+      action: fs:readdir
+      input:
+        paths:
+          - charts/${{ steps.fetchEntity.output.entity.metadata.name }}
+        recursive: true
+
+    - id: deleteWorkspaceCopy
+      name: Delete workspace copy
+      action: fs:delete
+      input:
+        files:
+          - charts/${{ steps.fetchEntity.output.entity.metadata.name }}
+
+    - id: publishPullRequest
+      name: Publish pull request
+      action: publish:github:pull-request
+      input:
+        repoUrl: github.com?owner=Itamar-Ratson&repo=backstage-k8s-full
+        branchName: decommission/helm-chart/${{ steps.fetchEntity.output.entity.metadata.name }}
+        targetBranchName: main
+        title: "Decommission chart: ${{ steps.fetchEntity.output.entity.metadata.name }}"
+        description: |
+          Decommissioned scaffolded workload chart generated from Backstage.
+
+          - Component: `${{ steps.fetchEntity.output.entity.metadata.name }}`
+          - Removed path: `charts/${{ steps.fetchEntity.output.entity.metadata.name }}`
+          - File count: `${{ steps.listChartFiles.output.files.length }}`
+          - Requesting user: `${{ user.ref or 'unknown' }}`
+
+          Warning: this pull request only removes repository files. The running Helm release will NOT be uninstalled automatically. The requester must run `helm uninstall ${{ steps.fetchEntity.output.entity.metadata.name }} -n <namespace>` manually until ArgoCD lands.
+        filesToDelete: ${{ steps.listChartFiles.output.files.map(file => file.path) }}
+        draft: false
+  output:
+    links:
+      - title: Pull request
+        url: ${{ steps.publishPullRequest.output.remoteUrl }}

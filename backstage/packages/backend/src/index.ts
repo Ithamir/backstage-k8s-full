@@ -7,6 +7,7 @@
  */
 
 import { createBackend } from '@backstage/backend-defaults';
+import { scaffolderUtilActionsModule } from './actions/util/module';
 
 const backend = createBackend();
 
@@ -19,6 +20,7 @@ backend.add(import('@backstage/plugin-scaffolder-backend-module-github'));
 backend.add(
   import('@backstage/plugin-scaffolder-backend-module-notifications'),
 );
+backend.add(scaffolderUtilActionsModule);
 
 // techdocs plugin
 backend.add(import('@backstage/plugin-techdocs-backend'));
