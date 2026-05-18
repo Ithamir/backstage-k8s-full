@@ -4,6 +4,7 @@ import path from 'node:path';
 const repoRoot = path.resolve(__dirname, '../../../../');
 const repoSlug = 'Itamar-Ratson/backstage-k8s-full';
 const repoUrl = `https://github.com/${repoSlug}`;
+const catalogInfoPath = 'catalog-info.yaml';
 const chartTemplatePath = 'templates/helm-chart/template.yaml';
 const decommissionTemplatePath = 'templates/helm-chart-decommission/template.yaml';
 const chartCatalogPath = 'templates/helm-chart/skeleton/catalog-info.yaml.njk';
@@ -13,11 +14,19 @@ function readRepoFile(relativePath: string) {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
 }
 
+function expectFileToContain(relativePath: string, snippets: readonly string[]) {
+  const contents = readRepoFile(relativePath);
+
+  for (const snippet of snippets) {
+    expect(contents).toContain(snippet);
+  }
+}
+
 describe('helm chart template contract', () => {
   it('registers the template and publishes the expected scaffold', () => {
     const fileExpectations = [
       {
-        path: 'catalog-info.yaml',
+        path: catalogInfoPath,
         snippets: [
           'kind: Location',
           `target: ${repoUrl}/blob/main/templates/helm-chart/template.yaml`,
@@ -46,10 +55,7 @@ describe('helm chart template contract', () => {
     ] as const;
 
     for (const { path: relativePath, snippets } of fileExpectations) {
-      const contents = readRepoFile(relativePath);
-      for (const snippet of snippets) {
-        expect(contents).toContain(snippet);
-      }
+      expectFileToContain(relativePath, snippets);
     }
 
     const readme = readRepoFile(readmePath);
@@ -64,7 +70,7 @@ describe('helm chart decommission template contract', () => {
   it('registers the template and documents the decommission flow', () => {
     const fileExpectations = [
       {
-        path: 'catalog-info.yaml',
+        path: catalogInfoPath,
         snippets: [
           'kind: Location',
           `target: ${repoUrl}/blob/main/templates/helm-chart-decommission/template.yaml`,
@@ -91,10 +97,7 @@ describe('helm chart decommission template contract', () => {
     ] as const;
 
     for (const { path: relativePath, snippets } of fileExpectations) {
-      const contents = readRepoFile(relativePath);
-      for (const snippet of snippets) {
-        expect(contents).toContain(snippet);
-      }
+      expectFileToContain(relativePath, snippets);
     }
 
     const readme = readRepoFile(readmePath);

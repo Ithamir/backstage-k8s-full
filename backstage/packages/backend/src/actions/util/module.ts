@@ -3,7 +3,7 @@ import { scaffolderActionsExtensionPoint } from '@backstage/plugin-scaffolder-no
 
 import { createAssertAction } from './assert';
 
-export const scaffolderUtilModule = createBackendModule({
+export const scaffolderUtilActionsModule = createBackendModule({
   pluginId: 'scaffolder',
   moduleId: 'util-actions',
   register(env) {
@@ -17,5 +17,3 @@ export const scaffolderUtilModule = createBackendModule({
     });
   },
 });
-
-export default scaffolderUtilModule;

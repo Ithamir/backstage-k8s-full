@@ -1,8 +1,10 @@
 import { createTemplateAction } from '@backstage/plugin-scaffolder-node';
 
+const assertActionId = 'util:assert';
+
 export function createAssertAction() {
   return createTemplateAction({
-    id: 'util:assert',
+    id: assertActionId,
     description: 'Fails the task when the provided condition is false.',
     schema: {
       input: {
@@ -11,8 +13,10 @@ export function createAssertAction() {
       },
     },
     async handler(ctx) {
-      if (!ctx.input.condition) {
-        throw new Error(ctx.input.message);
+      const { condition, message } = ctx.input;
+
+      if (!condition) {
+        throw new Error(message);
       }
     },
   });
