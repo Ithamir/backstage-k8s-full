@@ -29,6 +29,10 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
 {{- end }}
 
+{{- define "backstage.kubernetesReaderName" -}}
+{{ include "backstage.fullname" . }}-kubernetes-read
+{{- end }}
+
 {{- define "backstage.githubSecretName" -}}
 {{- if .Values.github.auth.create }}
 {{- include "backstage.fullname" . }}-github
