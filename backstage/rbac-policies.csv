@@ -1,0 +1,17 @@
+p, role:default/viewer, catalog-entity, read, allow
+p, role:default/viewer, catalog.location.read, read, allow
+p, role:default/viewer, catalog-location, read, allow
+p, role:default/viewer, scaffolder.template.parameter.read, read, allow
+p, role:default/viewer, scaffolder.template.step.read, read, allow
+p, role:default/viewer, scaffolder-template, read, allow
+p, role:default/viewer, scaffolder-action, read, allow
+p, role:default/viewer, scaffolder-parameter, read, allow
+p, role:default/viewer, scaffolder-step, read, allow
+p, role:default/viewer, techdocs-metadata, read, allow
+p, role:default/viewer, techdocs-content, read, allow
+p, role:default/viewer, kubernetes.proxy, use, allow
+p, role:default/viewer, kubernetes.resources.read, read, allow
+p, role:default/viewer, kubernetes.clusters.read, read, allow
+p, role:default/viewer, kubernetes-proxy, use, allow
+p, role:default/viewer, search-query, read, allow
+g, user:default/guest, role:default/viewer

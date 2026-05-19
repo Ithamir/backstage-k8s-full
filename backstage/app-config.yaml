@@ -118,6 +118,14 @@ kubernetes:
 permission:
   # setting this to `false` will disable permissions
   enabled: true
+  rbac:
+    policies-csv-file: ./rbac-policies.csv
+    pluginsWithPermission:
+      - catalog
+      - kubernetes
+      - scaffolder
+      - search
+      - techdocs
 
 # see https://backstage.io/docs/ai/mcp-actions for more details
 mcpActions:

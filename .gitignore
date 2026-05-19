@@ -32,6 +32,7 @@
 !backstage/tsconfig.json
 !backstage/playwright.config.ts
 !backstage/app-config.production.yaml
+!backstage/rbac-policies.csv
 !backstage/packages/**/*.ts
 !backstage/packages/**/*.tsx
 !backstage/packages/**/*.json
