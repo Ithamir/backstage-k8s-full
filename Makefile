@@ -1,4 +1,4 @@
-.PHONY: smoke tf-check image charts-lint charts-test docs-lint docs-serve
+.PHONY: smoke tf-check image charts-lint charts-test rbac-admin-auth-test docs-lint docs-serve
 
 KUBE_CONTEXT := kind-backstage
 GATEWAY_NS := gateway
@@ -30,6 +30,9 @@ charts-test:
 	./tests/charts/test-edge-gateway-kubernetes-label.sh
 	./tests/charts/test-helm-chart-techdocs-scaffold.sh
 	./tests/charts/test-helm-chart-kubernetes-scaffold.sh
+
+rbac-admin-auth-test:
+	./tests/rbac/test-github-admin-auth-config.sh
 
 docs-lint:
 	@for site in $(SITES); do \

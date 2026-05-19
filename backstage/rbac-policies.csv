@@ -14,4 +14,6 @@ p, role:default/viewer, kubernetes.resources.read, read, allow
 p, role:default/viewer, kubernetes.clusters.read, read, allow
 p, role:default/viewer, kubernetes-proxy, use, allow
 p, role:default/viewer, search-query, read, allow
+p, role:default/platform-admin, *, *, allow
 g, user:default/guest, role:default/viewer
+g, user:default/itamar-ratson, role:default/platform-admin
