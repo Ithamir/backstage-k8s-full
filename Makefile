@@ -29,6 +29,7 @@ charts-test:
 	./tests/charts/test-backstage-rbac.sh
 	./tests/charts/test-edge-gateway-kubernetes-label.sh
 	./tests/charts/test-helm-chart-techdocs-scaffold.sh
+	./tests/charts/test-helm-chart-kubernetes-scaffold.sh
 
 docs-lint:
 	@for site in $(SITES); do \
