@@ -129,13 +129,15 @@ The image is now available to the cluster via the registry — no manual image l
 
 ## Step 5: Create the GitHub PAT Secret
 
-Backstage discovers catalog entities from this GitHub repo at runtime. It needs a fine-grained Personal Access Token (PAT) to read from the (private) repository.
+Backstage discovers catalog entities from this GitHub repo at runtime and uses scaffolder actions to publish GitHub changes. It needs a fine-grained Personal Access Token (PAT) for those GitHub API calls.
 
 1. Create a **fine-grained PAT** at <https://github.com/settings/personal-access-tokens/new>:
    - **Repository access:** Only select `Itamar-Ratson/backstage-k8s-full`
    - **Permissions:**
-     - `Contents: Read` — read catalog-info.yaml file contents
+     - `Contents: Read and write` — read catalog-info.yaml files and publish scaffolded changes
      - `Commit statuses: Read` — preflight check the catalog URL provider performs before reading (without this you get `403 Forbidden` and an empty catalog)
+     - `Pull requests: Read and write` — open pull requests from scaffolder actions
+     - `Workflows: Read and write` — publish changes that include workflow files
      - `Metadata: Read` — auto-granted
 
 2. Create the Kubernetes secret. Either use the imperative form:
@@ -154,6 +156,31 @@ Verify:
 ```bash
 kubectl get secret backstage-github-token -n backstage --context kind-backstage
 ```
+
+### Provision a GitHub OAuth App for dev sign-in
+
+Dev-mode admin sign-in uses a GitHub OAuth App alongside guest auth.
+
+Create a new OAuth App at <https://github.com/settings/developers> with this callback URL:
+
+```text
+http://localhost:7007/api/auth/github/handler/frame
+```
+
+No special scopes are needed for basic sign-in identity.
+
+Copy `backstage/app-config.local.example.yaml` to `backstage/app-config.local.yaml` and paste the OAuth App credentials into these keys:
+
+```yaml
+auth:
+  providers:
+    github:
+      development:
+        clientId: github-oauth-client-id
+        clientSecret: github-oauth-client-secret
+```
+
+The OAuth App is separate from the `backstage-github-token` PAT. The OAuth App signs you in to Backstage; the PAT lets Backstage discover catalog files and publish GitHub changes during scaffolder actions.
 
 ## Step 6: Deploy with Helm
 
@@ -265,7 +292,7 @@ make charts-lint
 
 ## Next Steps
 
-1. **Configure a production auth provider** — Replace guest auth with GitHub, Google, Okta, or another provider. See the [Authentication documentation](https://backstage.io/docs/auth/).
+1. **Finish production auth wiring** — Dev-mode now has GitHub auth alongside guest. Production still needs guest removed from production app-config and OAuth credentials migrated to chart-mounted secrets. See the [Authentication documentation](https://backstage.io/docs/auth/).
 
 2. **Add the Helm chart scaffolder template** — Use Backstage to scaffold new workload charts and publish them as pull requests instead of copying `charts/` by hand.
 
