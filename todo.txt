@@ -1,2 +1,2 @@
 [x] implement a ingress/gatewayapi
-[ ] configure the backstage kubernetes plugin
+[x] configure the backstage kubernetes plugin
