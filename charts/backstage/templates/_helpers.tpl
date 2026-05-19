@@ -41,6 +41,14 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 {{- end }}
 
+{{- define "backstage.githubOAuthSecretName" -}}
+{{- if .Values.oauth.github.create }}
+{{- include "backstage.fullname" . }}-github-oauth
+{{- else }}
+{{- required "oauth.github.existingSecret is required when oauth.github.create=false" .Values.oauth.github.existingSecret }}
+{{- end }}
+{{- end }}
+
 {{- define "backstage.postgresSecretName" -}}
 {{- if and .Values.postgres.enabled .Values.postgres.auth.create }}
 {{- include "backstage.fullname" . }}-postgres

@@ -39,6 +39,17 @@ github:
     existingSecret: ""
     token: ""
 
+oauth:
+  github:
+    create: false
+    existingSecret: backstage-github-oauth
+    clientId: ""
+    clientSecret: ""
+
+rbac:
+  policies: ""
+  users: ""
+
 postgres:
   enabled: true
   image:

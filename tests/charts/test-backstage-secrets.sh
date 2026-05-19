@@ -14,7 +14,7 @@ assert_contains "deployment refs github secret" "$output" "name: backstage-githu
 # Test 2: create=false with existingSecret — no GitHub Secret rendered, Deployment references supplied name
 output=$(helm template backstage "$CHART_DIR" -f "$FIXTURES/github-existing-secret.yaml" 2>&1)
 assert_contains "deployment refs existingSecret" "$output" "name: my-gh-secret"
-assert_not_contains "github create=false should not render backstage-github Secret" "$output" "name: backstage-github"
+assert_not_contains "github create=false should not render PAT Secret data key" "$output" "GITHUB_TOKEN:"
 
 # Test 3: create=true with empty token fails with required message
 assert_fails "github empty token fails" "github.auth.token is required" \

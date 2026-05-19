@@ -14,12 +14,16 @@ rbac_policies_path="backstage/rbac-policies.csv"
 users_path="users.yaml"
 sign_in_module_path="backstage/packages/app/src/modules/signIn/index.tsx"
 app_path="backstage/packages/app/src/App.tsx"
+kind_values_path="deploy/kind/backstage.yaml"
+chart_values_path="charts/backstage/values.yaml"
 
 backend_index=$(cat "$backend_index_path")
 app_config=$(cat "$app_config_path")
 rbac_policies=$(cat "$rbac_policies_path")
 sign_in_module=$(cat "$sign_in_module_path" 2>/dev/null || true)
 app_tsx=$(cat "$app_path")
+kind_values=$(cat "$kind_values_path")
+chart_values=$(cat "$chart_values_path")
 
 assert_contains "GitHub auth backend module is registered" "$backend_index" "backend.add(import('@backstage/plugin-auth-backend-module-github-provider'))"
 assert_contains "GitHub auth provider is declared" "$app_config" "github:"
@@ -48,6 +52,17 @@ assert_contains "local example points at users.yaml" "$local_example" "target: .
 
 assert_contains "platform-admin wildcard policy is present" "$rbac_policies" "p, role:default/platform-admin, *, *, allow"
 assert_contains "admin user is assigned platform-admin" "$rbac_policies" "g, user:default/itamar-ratson, role:default/platform-admin"
+
+assert_contains "kind values use OAuth client ID env placeholder" "$kind_values" 'clientId: ${AUTH_GITHUB_CLIENT_ID}'
+assert_contains "kind values use OAuth client secret env placeholder" "$kind_values" 'clientSecret: ${AUTH_GITHUB_CLIENT_SECRET}'
+assert_contains "kind values configure RBAC admin user" "$kind_values" "user:default/itamar-ratson"
+assert_contains "kind values override RBAC CSV path" "$kind_values" "/etc/backstage/rbac-policies.csv"
+assert_contains "kind values catalog users from mounted file" "$kind_values" "target: /etc/backstage/users.yaml"
+assert_contains "kind values reference OAuth existing secret" "$kind_values" "existingSecret: backstage-github-oauth"
+assert_contains "chart values declare OAuth section" "$chart_values" "oauth:"
+assert_contains "chart values declare OAuth GitHub section" "$chart_values" "github:"
+assert_contains "chart values default OAuth creation off" "$chart_values" "create: false"
+assert_contains "chart values declare OAuth existingSecret" "$chart_values" "existingSecret: backstage-github-oauth"
 
 assert_contains "sign-in module exports signInModule" "$sign_in_module" "export const signInModule"
 assert_contains "sign-in module uses SignInPageBlueprint" "$sign_in_module" "SignInPageBlueprint"

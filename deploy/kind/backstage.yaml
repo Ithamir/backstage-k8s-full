@@ -9,6 +9,11 @@ github:
     create: false
     existingSecret: backstage-github-token
 
+oauth:
+  github:
+    create: false
+    existingSecret: backstage-github-oauth
+
 postgres:
   enabled: true
   auth:
@@ -42,7 +47,21 @@ appConfig:
       runIn: local
     publisher:
       type: local
+  auth:
+    providers:
+      github:
+        development:
+          clientId: ${AUTH_GITHUB_CLIENT_ID}
+          clientSecret: ${AUTH_GITHUB_CLIENT_SECRET}
+  permission:
+    rbac:
+      admin:
+        users:
+          - user:default/itamar-ratson
+      policies-csv-file: /etc/backstage/rbac-policies.csv
   catalog:
     locations:
       - type: url
         target: https://github.com/Itamar-Ratson/backstage-k8s-full/blob/main/**/catalog-info.yaml
+      - type: file
+        target: /etc/backstage/users.yaml

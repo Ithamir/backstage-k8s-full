@@ -21,6 +21,7 @@ charts-lint:
 charts-test:
 	./tests/charts/test-backstage-image.sh
 	./tests/charts/test-backstage-secrets.sh
+	./tests/charts/test-backstage-oauth.sh
 	./tests/charts/test-backstage-configmap.sh
 	./tests/charts/test-backstage-catalog-config.sh
 	./tests/charts/test-backstage-mkdocs-image-toolchain.sh
@@ -62,10 +63,18 @@ smoke: tf-check charts-lint charts-test
 		 echo "Create it with:" && \
 		 echo '  kubectl create secret generic backstage-github-token --from-literal=GITHUB_TOKEN="$$GITHUB_TOKEN" -n $(BACKSTAGE_NS) --context $(KUBE_CONTEXT)' && \
 		 exit 1)
+	@echo "Checking for backstage-github-oauth secret..."
+	@kubectl get secret backstage-github-oauth -n $(BACKSTAGE_NS) --context $(KUBE_CONTEXT) >/dev/null 2>&1 || \
+		(echo "ERROR: Secret backstage-github-oauth not found in namespace $(BACKSTAGE_NS)." && \
+		 echo "Create it with:" && \
+		 echo '  kubectl create secret generic backstage-github-oauth --from-literal=AUTH_GITHUB_CLIENT_ID="..." --from-literal=AUTH_GITHUB_CLIENT_SECRET="..." -n $(BACKSTAGE_NS) --context $(KUBE_CONTEXT)' && \
+		 exit 1)
 	helm upgrade --install backstage charts/backstage \
 		--namespace $(BACKSTAGE_NS) --wait --timeout 5m \
 		--kube-context $(KUBE_CONTEXT) \
-		-f deploy/kind/backstage.yaml
+		-f deploy/kind/backstage.yaml \
+		--set-file rbac.policies=backstage/rbac-policies.csv \
+		--set-file rbac.users=users.yaml
 	kubectl wait --for=condition=Available deployment/backstage \
 		-n $(BACKSTAGE_NS) --timeout=300s --context $(KUBE_CONTEXT)
 	@echo "Verifying Backstage is reachable..."
