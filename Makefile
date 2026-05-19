@@ -27,6 +27,7 @@ charts-test:
 	./tests/charts/test-backstage-techdocs-config.sh
 	./tests/charts/test-backstage-kubernetes-label.sh
 	./tests/charts/test-backstage-rbac.sh
+	./tests/charts/test-edge-gateway-kubernetes-label.sh
 	./tests/charts/test-helm-chart-techdocs-scaffold.sh
 
 docs-lint:

@@ -15,7 +15,7 @@ spec:
   system: developer-portal
   dependsOn:
     - resource:backstage-postgres
-    - resource:edge-gateway
+    - component:edge-gateway
   providesApis:
     - backstage-api
 ---

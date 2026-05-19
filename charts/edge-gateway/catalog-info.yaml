@@ -1,10 +1,11 @@
 ---
 apiVersion: backstage.io/v1alpha1
-kind: Resource
+kind: Component
 metadata:
   name: edge-gateway
   description: Envoy Gateway providing HTTP routing and TLS termination at the cluster edge.
   annotations:
+    backstage.io/kubernetes-id: edge-gateway
     backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/charts/edge-gateway/
     github.com/project-slug: Itamar-Ratson/backstage-k8s-full
 spec:
