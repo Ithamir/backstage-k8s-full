@@ -57,7 +57,7 @@ appConfig:
     rbac:
       admin:
         users:
-          - user:default/itamar-ratson
+          - name: user:default/itamar-ratson
       policies-csv-file: /etc/backstage/rbac-policies.csv
   catalog:
     locations:
