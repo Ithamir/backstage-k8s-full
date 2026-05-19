@@ -36,19 +36,13 @@ tracked_files=$(git ls-files --cached)
 repo_visible_files=$(git ls-files --cached --others --exclude-standard)
 
 assert_contains "users.yaml is tracked" "$tracked_files" "$users_path"
-assert_contains "local config example is tracked" "$tracked_files" "$local_config_example_path"
+assert_not_contains "local config example is not tracked" "$tracked_files" "$local_config_example_path"
 assert_not_contains "real local config is not tracked or unignored" "$repo_visible_files" "$local_config_path"
 
 users_yaml=$(cat "$users_path" 2>/dev/null || true)
 assert_contains "admin user entity is named itamar-ratson" "$users_yaml" "name: itamar-ratson"
 assert_contains "admin user display name is configured" "$users_yaml" "displayName: Itamar Ratson"
 assert_contains "admin user has empty group membership" "$users_yaml" "memberOf: []"
-
-local_example=$(cat "$local_config_example_path" 2>/dev/null || true)
-assert_contains "local example includes GitHub client ID" "$local_example" "clientId: github-oauth-client-id"
-assert_contains "local example includes GitHub client secret" "$local_example" "clientSecret: github-oauth-client-secret"
-assert_contains "local example includes RBAC admin users" "$local_example" "permission:"
-assert_contains "local example points at users.yaml" "$local_example" "target: ../../users.yaml"
 
 assert_contains "platform-admin wildcard policy is present" "$rbac_policies" "p, role:default/platform-admin, *, *, allow"
 assert_contains "admin user is assigned platform-admin" "$rbac_policies" "g, user:default/itamar-ratson, role:default/platform-admin"

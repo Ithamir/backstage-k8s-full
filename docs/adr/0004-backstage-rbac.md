@@ -4,6 +4,8 @@
 
 Accepted
 
+Superseded in part by [ADR-0005](0005-backstage-rbac-on-kind.md): OAuth credentials no longer stay in `backstage/app-config.local.yaml`, and the deferred KinD / Helm-chart deployment item is closed. The RBAC plugin choice, CSV-as-source-of-truth decision, and `viewer` / `platform-admin` role design remain in force.
+
 ## Context
 
 Backstage had `permission.enabled: true`, but the backend loaded the allow-all permission policy. That meant the permission framework was present without enforcing meaningful authorization. The project also only had guest sign-in, so there was no stable named identity to receive administrative access.

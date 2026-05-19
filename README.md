@@ -74,22 +74,7 @@ backend.add(import('@backstage/plugin-catalog-backend-module-github'));
 
 This enables the catalog to discover `catalog-info.yaml` files from GitHub via URL discovery.
 
-Key configuration notes:
-
-`backstage/.dockerignore` must NOT exclude `packages/*/src`. The default from `create-app` excludes source files, which causes `yarn tsc` to fail with "No inputs were found".
-
-For local development with `yarn dev`, create `backstage/app-config.local.yaml` (gitignored) to load catalog entities from the repo without needing a GitHub token:
-
-```yaml
-catalog:
-  locations:
-    - type: file
-      target: ../../catalog-info.yaml
-    - type: file
-      target: ../catalog-info.yaml
-    - type: file
-      target: ../../charts/edge-gateway/catalog-info.yaml
-```
+Key configuration note: `backstage/.dockerignore` must NOT exclude `packages/*/src`. The default from `create-app` excludes source files, which causes `yarn tsc` to fail with "No inputs were found".
 
 Production app-config is no longer baked into the image. Instead, the Helm chart renders a ConfigMap from `values.appConfig` and mounts it into the pod at runtime via `--config /etc/backstage/app-config.runtime.yaml`. To change runtime configuration, edit `deploy/kind/backstage.yaml` (or the chart's `values.appConfig` defaults) and run `helm upgrade` — no image rebuild required.
 
@@ -157,32 +142,28 @@ Verify:
 kubectl get secret backstage-github-token -n backstage --context kind-backstage
 ```
 
-### Provision a GitHub OAuth App for dev sign-in
+## Step 6: Provision a GitHub OAuth App for the kind deployment
 
-Dev-mode admin sign-in uses a GitHub OAuth App alongside guest auth.
+The kind deployment supports GitHub admin sign-in alongside guest auth.
 
-Create a new OAuth App at <https://github.com/settings/developers> with this callback URL:
+Create or edit a GitHub OAuth App at <https://github.com/settings/developers> with:
 
-```text
-http://localhost:7007/api/auth/github/handler/frame
+- **Homepage URL:** `http://backstage.localtest.me:8080`
+- **Authorization callback URL:** `http://backstage.localtest.me:8080/api/auth/github/handler/frame`
+
+An existing OAuth App can be edited in place. Reuse the same `client_id` and `client_secret`; only the homepage and callback URLs need to point at the kind hostname.
+
+Create the Kubernetes Secret:
+
+```bash
+kubectl create secret generic backstage-github-oauth --from-literal=AUTH_GITHUB_CLIENT_ID="..." --from-literal=AUTH_GITHUB_CLIENT_SECRET="..." -n backstage --context kind-backstage
 ```
 
-No special scopes are needed for basic sign-in identity.
-
-Copy `backstage/app-config.local.example.yaml` to `backstage/app-config.local.yaml` and paste the OAuth App credentials into these keys:
-
-```yaml
-auth:
-  providers:
-    github:
-      development:
-        clientId: github-oauth-client-id
-        clientSecret: github-oauth-client-secret
-```
+This Secret is a one-time bootstrap prerequisite for a fresh kind cluster. `make smoke` checks that it exists, but it does not regenerate it on each run.
 
 The OAuth App is separate from the `backstage-github-token` PAT. The OAuth App signs you in to Backstage; the PAT lets Backstage discover catalog files and publish GitHub changes during scaffolder actions.
 
-## Step 6: Deploy with Helm
+## Step 7: Deploy with Helm
 
 Install the edge-gateway chart (shared Gateway resource) and then the backstage chart:
 
@@ -201,7 +182,9 @@ kubectl label namespace backstage gateway-routes=enabled --overwrite --context k
 helm upgrade --install backstage charts/backstage \
   --namespace backstage --wait --timeout 5m \
   --kube-context kind-backstage \
-  -f deploy/kind/backstage.yaml
+  -f deploy/kind/backstage.yaml \
+  --set-file rbac.policies=backstage/rbac-policies.csv \
+  --set-file rbac.users=users.yaml
 ```
 
 **Namespace label requirement:** Any app fronting the shared edge-gateway must have its namespace labeled with `gateway-routes=enabled`. The Gateway uses a label-selector `allowedRoutes` policy — only HTTPRoutes in namespaces carrying this label are admitted. The Makefile applies this label automatically as part of `make smoke`.
@@ -212,13 +195,34 @@ Or simply run the full smoke test which performs all of the above:
 make smoke
 ```
 
-## Step 7: Access Backstage
+## Step 8: Access Backstage
 
 Open <http://backstage.localtest.me:8080> in your browser. No port-forwarding required.
 
 `localtest.me` is a real DNS domain that resolves to 127.0.0.1. Traffic flows through KinD's port mappings into the Envoy Gateway, which routes based on the hostname to the Backstage service.
 
-You should see the Backstage UI and be able to log in as a guest.
+You should see both `Guest` and `GitHub` sign-in options.
+
+## Manual RBAC Demo
+
+Run this sequence after changing frontend code or rebuilding from a fresh checkout:
+
+```bash
+make image
+for node in backstage-control-plane backstage-worker; do docker exec "$node" crictl rmi localhost:5001/backstage:1.0.0 || true; done
+make smoke
+```
+
+Then verify the end-to-end flow:
+
+1. Visit <http://backstage.localtest.me:8080>.
+2. Confirm both Guest and GitHub sign-in buttons are visible.
+3. Sign in with GitHub.
+4. Open `/rbac` and confirm the `viewer` and `platform-admin` roles are listed.
+5. Sign out.
+6. Sign in as guest.
+7. Open a scaffolder template and attempt to create it.
+8. Confirm execution is denied by the permission framework.
 
 ## Updating Backstage
 
@@ -234,6 +238,8 @@ helm upgrade backstage charts/backstage \
   --namespace backstage --wait --timeout 5m \
   --kube-context kind-backstage \
   -f deploy/kind/backstage.yaml \
+  --set-file rbac.policies=backstage/rbac-policies.csv \
+  --set-file rbac.users=users.yaml \
   --set image.tag=1.0.1
 ```
 
@@ -292,7 +298,7 @@ make charts-lint
 
 ## Next Steps
 
-1. **Finish production auth wiring** — Dev-mode now has GitHub auth alongside guest. Production still needs guest removed from production app-config and OAuth credentials migrated to chart-mounted secrets. See the [Authentication documentation](https://backstage.io/docs/auth/).
+1. **Define a production auth target** — The kind deployment now carries the supported GitHub OAuth path. A production deployment still needs HTTPS callbacks, environment-specific OAuth Apps, and a decision on guest auth. See the [Authentication documentation](https://backstage.io/docs/auth/).
 
 2. **Add the Helm chart scaffolder template** — Use Backstage to scaffold new workload charts and publish them as pull requests instead of copying `charts/` by hand.
 
