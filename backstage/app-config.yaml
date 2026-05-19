@@ -12,6 +12,11 @@ app:
     - nav-item:catalog: false
     - nav-item:scaffolder: false
 
+    # The @backstage/plugin-kubernetes/alpha standalone /kubernetes page loads
+    # the entity-scoped Router and crashes with "Entity context is not available".
+    # The entity tab (entity-content:kubernetes/kubernetes) is unaffected.
+    - page:kubernetes: false
+
     # Configure the catalog index page to be the root page, this is normally mounted on /catalog
     - page:catalog:
         config:
