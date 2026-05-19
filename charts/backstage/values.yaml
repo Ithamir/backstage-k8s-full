@@ -7,6 +7,11 @@ image:
 serviceAccount:
   annotations: {}
 
+kubernetes:
+  rbac:
+    # Disable when cluster RBAC is provisioned externally by platform admins.
+    enabled: true
+
 resources:
   requests:
     cpu: 200m

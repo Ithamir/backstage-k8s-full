@@ -5,6 +5,7 @@ metadata:
   name: backstage
   description: Backstage application providing a unified developer portal with software catalog, scaffolder, and TechDocs.
   annotations:
+    backstage.io/kubernetes-id: backstage
     backstage.io/source-location: url:https://github.com/Itamar-Ratson/backstage-k8s-full/tree/main/backstage/
     github.com/project-slug: Itamar-Ratson/backstage-k8s-full
 spec:

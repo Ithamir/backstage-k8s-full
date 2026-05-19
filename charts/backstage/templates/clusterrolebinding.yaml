@@ -1,0 +1,16 @@
+{{- if .Values.kubernetes.rbac.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "backstage.fullname" . }}-kubernetes-read
+  labels:
+    {{- include "backstage.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "backstage.fullname" . }}-kubernetes-read
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "backstage.fullname" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

@@ -16,6 +16,26 @@ postgres:
     password: hunter2
 
 appConfig:
+  kubernetes:
+    serviceLocatorMethod:
+      type: multiTenant
+    clusterLocatorMethods:
+      - type: config
+        clusters:
+          - name: local
+            url: https://kubernetes.default.svc.cluster.local
+            authProvider: serviceAccount
+            skipTLSVerify: false
+    customResources:
+      - group: gateway.networking.k8s.io
+        apiVersion: v1
+        plural: gateways
+      - group: gateway.networking.k8s.io
+        apiVersion: v1
+        plural: httproutes
+      - group: gateway.networking.k8s.io
+        apiVersion: v1
+        plural: gatewayclasses
   techdocs:
     builder: local
     generator:
