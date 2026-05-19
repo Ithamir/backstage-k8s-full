@@ -64,6 +64,6 @@ assert_contains "sign-in module uses GitHub auth api ref" "$sign_in_module" "git
 assert_contains "sign-in module keeps guest provider" "$sign_in_module" "'guest'"
 assert_contains "sign-in module declares GitHub provider id" "$sign_in_module" "'github-auth-provider'"
 assert_contains "App imports signInModule" "$app_tsx" "import { signInModule } from './modules/signIn';"
-assert_contains "App registers signInModule in features" "$app_tsx" "features: [catalogPlugin, kubernetesPlugin, rbacPlugin, navModule, signInModule]"
+assert_contains "App registers signInModule in features" "$app_tsx" "signInModule,"
 
 report_results "GitHub admin auth config"

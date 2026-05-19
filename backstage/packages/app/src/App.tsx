@@ -6,5 +6,11 @@ import { navModule } from './modules/nav';
 import { signInModule } from './modules/signIn';
 
 export default createApp({
-  features: [catalogPlugin, kubernetesPlugin, rbacPlugin, navModule, signInModule],
+  features: [
+    catalogPlugin,
+    kubernetesPlugin,
+    rbacPlugin,
+    navModule,
+    signInModule,
+  ],
 });
