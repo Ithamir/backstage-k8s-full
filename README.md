@@ -153,11 +153,16 @@ Create or edit a GitHub OAuth App at <https://github.com/settings/developers> wi
 
 An existing OAuth App can be edited in place. Reuse the same `client_id` and `client_secret`; only the homepage and callback URLs need to point at the kind hostname.
 
-Create the Kubernetes Secret:
+Create the Kubernetes Secret. Either use the imperative form:
 
 ```bash
-kubectl create secret generic backstage-github-oauth --from-literal=AUTH_GITHUB_CLIENT_ID="..." --from-literal=AUTH_GITHUB_CLIENT_SECRET="..." -n backstage --context kind-backstage
+kubectl create secret generic backstage-github-oauth \
+  --from-literal=AUTH_GITHUB_CLIENT_ID="$AUTH_GITHUB_CLIENT_ID" \
+  --from-literal=AUTH_GITHUB_CLIENT_SECRET="$AUTH_GITHUB_CLIENT_SECRET" \
+  -n backstage --context kind-backstage
 ```
+
+…or copy `secret-backstage-github-oauth.example.yaml` to `secret-backstage-github-oauth.yaml` (gitignored), substitute the OAuth App credentials, and `kubectl apply -f` it.
 
 This Secret is a one-time bootstrap prerequisite for a fresh kind cluster. `make smoke` checks that it exists, but it does not regenerate it on each run.
 
