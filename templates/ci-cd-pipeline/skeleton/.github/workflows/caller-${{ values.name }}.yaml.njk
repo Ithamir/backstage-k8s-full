@@ -1,0 +1,30 @@
+name: Build ${{ values.name }} Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+{% for pattern in values['path-filter-patterns'].split('\n') %}
+{% if pattern | trim %}
+      - ${{ pattern | trim }}
+{% endif %}
+{% endfor %}
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
+  issues: write
+
+jobs:
+  build:
+    name: Build ${{ values.name }}
+    uses: ./.github/workflows/build-image.yaml
+    with:
+      app-name: ${{ values.name }}
+      context: ${{ values.context }}
+      dockerfile: ${{ values.dockerfile }}
+      bump-file: ${{ values['bump-file'] }}
+      bump-yaml-path: ${{ values['bump-yaml-path'] }}

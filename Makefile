@@ -26,6 +26,7 @@ charts-test:
 	./tests/charts/test-edge-gateway-kubernetes-label.sh
 	./tests/charts/test-helm-chart-techdocs-scaffold.sh
 	./tests/charts/test-helm-chart-kubernetes-scaffold.sh
+	./tests/charts/test-ci-cd-pipeline-scaffold.sh
 
 rbac-test:
 	./tests/rbac/test-rbac-policies-csv.sh
