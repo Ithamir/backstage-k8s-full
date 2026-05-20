@@ -1,7 +1,8 @@
-# KinD environment overrides for backstage chart.
-# These values are for local development only — do not use for other environments.
+# Dev environment overrides for backstage chart.
+# These values are for local development only - do not use for other environments.
 image:
-  repository: localhost:5001/backstage
+  repository: ghcr.io/itamar-ratson/backstage-k8s-full/backstage
+  tag: ""
   pullPolicy: IfNotPresent
 
 github:

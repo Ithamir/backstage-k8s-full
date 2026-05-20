@@ -5,7 +5,7 @@ source "$(dirname "$0")/helpers.sh"
 
 echo "=== Backstage Kubernetes label tests ==="
 
-output=$(helm template backstage "$CHART_DIR" -f deploy/kind/backstage.yaml 2>&1)
+output=$(helm template backstage "$CHART_DIR" -f deploy/dev/backstage.yaml 2>&1)
 
 assert_contains "Deployment has kubernetes-id label" "$output" "kind: Deployment"
 assert_contains "Backstage resources have kubernetes-id label" "$output" "backstage.io/kubernetes-id: backstage"

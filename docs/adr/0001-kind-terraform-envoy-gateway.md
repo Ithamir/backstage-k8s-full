@@ -12,7 +12,7 @@ The active TODO "implement a ingress/gatewayapi" was unaddressed — the only wa
 
 ## Decision
 
-Replace minikube with **KinD provisioned by Terraform**, fronted by a **local Docker registry** and exposed via the **Kubernetes Gateway API** (Envoy Gateway).
+Replace minikube with **KinD provisioned by Terraform** and exposed via the **Kubernetes Gateway API** (Envoy Gateway).
 
 ### Cluster Tool: KinD (over minikube)
 
@@ -40,12 +40,11 @@ The data plane uses `Service.type=NodePort` on port 30080. KinD's `extraPortMapp
 
 `localtest.me` is a real DNS domain resolving all subdomains to 127.0.0.1 — no `/etc/hosts` edits, real hostname for Gateway listener filtering. HTTPS deferred (would pull in cert-manager or mkcert complexity).
 
-### Provider Stack (4 providers)
+### Provider Stack (3 providers)
 
 | Provider | Purpose |
 |----------|---------|
 | `tehcyx/kind` | KinD cluster lifecycle |
-| `kreuzwerker/docker` | Local registry container + docker network |
 | `hashicorp/helm` | Gateway API CRDs + Envoy Gateway controller |
 | `gavinbunney/kubectl` | EnvoyProxy CR + custom GatewayClass |
 
@@ -59,10 +58,6 @@ CRDs and controller are installed as separate Helm releases (`gateway-crds-helm`
 
 A custom `GatewayClass` with `parametersRef` pointing to the `EnvoyProxy` CR, rather than patching the default `eg` class the Helm chart creates. Avoids fighting chart ownership on upgrades.
 
-### Local Registry
-
-A `registry:2` container (`kind-registry`) on the shared docker network, host port 5001. KinD nodes have `containerdConfigPatches` mirroring `localhost:5001` to `kind-registry:5000`. Image references use `localhost:5001/backstage:X.Y.Z` with `imagePullPolicy: IfNotPresent`.
-
 ### Namespace Strategy
 
 - `gateway` namespace: owns the Gateway resource (platform-team pattern)
@@ -71,13 +66,12 @@ A `registry:2` container (`kind-registry`) on the shared docker network, host po
 
 ### Terraform Layout
 
-Flat files at `terraform/` split by concern: `versions.tf`, `providers.tf`, `variables.tf`, `cluster.tf`, `registry.tf`, `gateway.tf`, `outputs.tf`. No sub-modules — each logical unit is consumed once; sub-modules would force artificial variable/output plumbing.
+Flat files at `terraform/` split by concern: `versions.tf`, `providers.tf`, `variables.tf`, `cluster.tf`, `gateway.tf`, `outputs.tf`. No sub-modules — each logical unit is consumed once; sub-modules would force artificial variable/output plumbing.
 
 ## Consequences
 
 - `terraform apply` brings up a working cluster end-to-end
 - `terraform destroy` cleanly tears it down
-- Images survive cluster recreates (persistent registry)
 - Browser access at a real hostname with no port-forwarding
 - YAML matches production patterns (`imagePullPolicy: IfNotPresent`, registry-prefixed images)
 - Future GitOps migration is structural translation, not a refactor

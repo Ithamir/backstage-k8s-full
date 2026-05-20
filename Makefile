@@ -1,22 +1,16 @@
-.PHONY: smoke tf-check image charts-lint charts-test rbac-test rbac-admin-auth-test docs-lint docs-serve
+.PHONY: smoke tf-check charts-lint charts-test rbac-test rbac-admin-auth-test
 
 KUBE_CONTEXT := kind-backstage
 GATEWAY_NS := gateway
 BACKSTAGE_NS := backstage
-BACKSTAGE_IMAGE := localhost:5001/backstage:1.0.0
-SITES := $(shell find . -name mkdocs.yaml -not -path '*/node_modules/*')
-
-image:
-	docker build -t $(BACKSTAGE_IMAGE) backstage/
-	docker push $(BACKSTAGE_IMAGE)
 
 tf-check:
 	terraform -chdir=terraform fmt -check -recursive
 	terraform -chdir=terraform validate
 
 charts-lint:
-	helm lint charts/edge-gateway -f deploy/kind/edge-gateway.yaml
-	helm lint charts/backstage -f deploy/kind/backstage.yaml
+	helm lint charts/edge-gateway -f deploy/dev/edge-gateway.yaml
+	helm lint charts/backstage -f deploy/dev/backstage.yaml
 
 charts-test:
 	./tests/charts/test-backstage-image.sh
@@ -38,23 +32,12 @@ rbac-test:
 rbac-admin-auth-test:
 	./tests/rbac/test-github-admin-auth-config.sh
 
-docs-lint:
-	@for site in $(SITES); do \
-		dir=$$(dirname "$$site"); \
-		echo "Building docs site $$dir"; \
-		docker run --rm -v "$(PWD):/workspace" -w "/workspace/$$dir" $(BACKSTAGE_IMAGE) mkdocs build --strict; \
-	done
-
-docs-serve:
-	@test -n "$(ENTITY)" || (echo "ERROR: ENTITY=<path> is required, for example ENTITY=."; exit 1)
-	docker run --rm -it -p 8000:8000 -v "$(PWD):/workspace" -w "/workspace/$(ENTITY)" $(BACKSTAGE_IMAGE) mkdocs serve --dev-addr=0.0.0.0:8000
-
 smoke: tf-check charts-lint charts-test
 	terraform -chdir=terraform apply -auto-approve
 	helm upgrade --install edge-gateway charts/edge-gateway \
 		--namespace $(GATEWAY_NS) --create-namespace --wait \
 		--kube-context $(KUBE_CONTEXT) \
-		-f deploy/kind/edge-gateway.yaml
+		-f deploy/dev/edge-gateway.yaml
 	kubectl create namespace $(BACKSTAGE_NS) --dry-run=client -o yaml | kubectl apply -f - --context $(KUBE_CONTEXT)
 	kubectl label namespace $(BACKSTAGE_NS) gateway-routes=enabled --overwrite --context $(KUBE_CONTEXT)
 	@echo "Checking for backstage-github-token secret..."
@@ -72,7 +55,7 @@ smoke: tf-check charts-lint charts-test
 	helm upgrade --install backstage charts/backstage \
 		--namespace $(BACKSTAGE_NS) --wait --timeout 5m \
 		--kube-context $(KUBE_CONTEXT) \
-		-f deploy/kind/backstage.yaml \
+		-f deploy/dev/backstage.yaml \
 		--set-file rbac.policies=backstage/rbac-policies.csv \
 		--set-file rbac.users=users.yaml
 	kubectl wait --for=condition=Available deployment/backstage \

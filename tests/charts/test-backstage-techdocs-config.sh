@@ -5,7 +5,7 @@ source "$(dirname "$0")/helpers.sh"
 
 echo "=== TechDocs runtime config tests ==="
 
-output=$(helm template backstage "$CHART_DIR" -f deploy/kind/backstage.yaml 2>&1)
+output=$(helm template backstage "$CHART_DIR" -f deploy/dev/backstage.yaml 2>&1)
 
 assert_contains "ConfigMap has techdocs block" "$output" "techdocs:"
 assert_contains "TechDocs builder runs locally" "$output" "builder: local"

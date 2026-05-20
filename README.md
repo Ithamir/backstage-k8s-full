@@ -76,11 +76,11 @@ This enables the catalog to discover `catalog-info.yaml` files from GitHub via U
 
 Key configuration note: `backstage/.dockerignore` must NOT exclude `packages/*/src`. The default from `create-app` excludes source files, which causes `yarn tsc` to fail with "No inputs were found".
 
-Production app-config is no longer baked into the image. Instead, the Helm chart renders a ConfigMap from `values.appConfig` and mounts it into the pod at runtime via `--config /etc/backstage/app-config.runtime.yaml`. To change runtime configuration, edit `deploy/kind/backstage.yaml` (or the chart's `values.appConfig` defaults) and run `helm upgrade` — no image rebuild required.
+Production app-config is no longer baked into the image. Instead, the Helm chart renders a ConfigMap from `values.appConfig` and mounts it into the pod at runtime via `--config /etc/backstage/app-config.runtime.yaml`. To change runtime configuration, edit `deploy/dev/backstage.yaml` (or the chart's `values.appConfig` defaults) and run `helm upgrade` — no image rebuild required.
 
 ## Step 3: Provision the Cluster
 
-Terraform brings up a KinD cluster, a local Docker registry, and the Envoy Gateway controller:
+Terraform brings up a KinD cluster and the Envoy Gateway controller:
 
 ```bash
 cd terraform
@@ -90,7 +90,6 @@ terraform apply
 
 This creates:
 - A 2-node KinD cluster (1 control-plane + 1 worker) with port 8080 mapped to the Envoy data plane
-- A local Docker registry at `localhost:5001`
 - Gateway API CRDs + Envoy Gateway controller
 - A custom `GatewayClass` (`eg-nodeport`) wired for NodePort exposure
 
@@ -101,16 +100,15 @@ kubectl get nodes
 # Should show 2 nodes (control-plane + worker) in Ready state
 ```
 
-## Step 4: Build and Push the Image
+## Step 4: Confirm the Backstage Image
 
-Build the Backstage image and push it to the local registry:
+The dev overlay pulls Backstage from GHCR:
 
 ```bash
-docker build -t localhost:5001/backstage:1.0.0 backstage/
-docker push localhost:5001/backstage:1.0.0
+grep -A3 '^image:' deploy/dev/backstage.yaml
 ```
 
-The image is now available to the cluster via the registry — no manual image loading required.
+The `image.tag` value is populated by the CI/CD image build workflow after the first successful build. Until that first build has landed a tag in `deploy/dev/backstage.yaml`, a fresh clone may not have a pullable image for `make smoke`.
 
 ## Step 5: Create the GitHub PAT Secret
 
@@ -177,7 +175,7 @@ Install the edge-gateway chart (shared Gateway resource) and then the backstage 
 helm upgrade --install edge-gateway charts/edge-gateway \
   --namespace gateway --create-namespace --wait \
   --kube-context kind-backstage \
-  -f deploy/kind/edge-gateway.yaml
+  -f deploy/dev/edge-gateway.yaml
 
 # Pre-create the backstage namespace and apply the opt-in label (idempotent)
 kubectl create namespace backstage --dry-run=client -o yaml | kubectl apply -f - --context kind-backstage
@@ -187,7 +185,7 @@ kubectl label namespace backstage gateway-routes=enabled --overwrite --context k
 helm upgrade --install backstage charts/backstage \
   --namespace backstage --wait --timeout 5m \
   --kube-context kind-backstage \
-  -f deploy/kind/backstage.yaml \
+  -f deploy/dev/backstage.yaml \
   --set-file rbac.policies=backstage/rbac-policies.csv \
   --set-file rbac.users=users.yaml
 ```
@@ -210,11 +208,9 @@ You should see both `Guest` and `GitHub` sign-in options.
 
 ## Manual RBAC Demo
 
-Run this sequence after changing frontend code or rebuilding from a fresh checkout:
+Run this sequence after changing frontend code or pulling a new image tag:
 
 ```bash
-make image
-for node in backstage-control-plane backstage-worker; do docker exec "$node" crictl rmi localhost:5001/backstage:1.0.0 || true; done
 make smoke
 ```
 
@@ -234,18 +230,13 @@ Then verify the end-to-end flow:
 When you make changes and need to redeploy:
 
 ```bash
-# Build with a new tag
-docker build -t localhost:5001/backstage:1.0.1 backstage/
-docker push localhost:5001/backstage:1.0.1
-
-# Upgrade the helm release with the new image tag
+# Upgrade the helm release with the image tag recorded in deploy/dev/backstage.yaml
 helm upgrade backstage charts/backstage \
   --namespace backstage --wait --timeout 5m \
   --kube-context kind-backstage \
-  -f deploy/kind/backstage.yaml \
+  -f deploy/dev/backstage.yaml \
   --set-file rbac.policies=backstage/rbac-policies.csv \
-  --set-file rbac.users=users.yaml \
-  --set image.tag=1.0.1
+  --set-file rbac.users=users.yaml
 ```
 
 ## Useful Commands
@@ -267,9 +258,6 @@ kubectl get httproute -n backstage
 # View Envoy Gateway controller logs
 kubectl logs -n envoy-gateway-system deploy/envoy-gateway
 
-# List images in local registry
-curl -s http://localhost:5001/v2/_catalog
-
 # View all resources in the namespace
 kubectl get all -n backstage
 
@@ -283,7 +271,7 @@ cd terraform && terraform destroy
 
 ## Smoke Test
 
-Run the full end-to-end verification (assumes image is already pushed to the local registry):
+Run the full end-to-end verification. This assumes `deploy/dev/backstage.yaml` points at a Backstage image tag that exists in GHCR:
 
 ```bash
 make smoke

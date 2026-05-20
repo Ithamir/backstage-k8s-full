@@ -5,13 +5,6 @@ resource "kind_cluster" "this" {
     kind        = "Cluster"
     api_version = "kind.x-k8s.io/v1alpha4"
 
-    containerd_config_patches = [
-      <<-TOML
-      [plugins."io.containerd.grpc.v1.cri".registry]
-        config_path = "/etc/containerd/certs.d"
-      TOML
-    ]
-
     node {
       role = "control-plane"
 

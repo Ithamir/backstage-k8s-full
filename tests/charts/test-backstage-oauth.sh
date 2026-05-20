@@ -6,7 +6,7 @@ source "$(dirname "$0")/helpers.sh"
 echo "=== Backstage GitHub OAuth chart tests ==="
 
 kind_values_args=(
-  -f deploy/kind/backstage.yaml
+  -f deploy/dev/backstage.yaml
   --set-file rbac.policies=backstage/rbac-policies.csv
   --set-file rbac.users=users.yaml
 )

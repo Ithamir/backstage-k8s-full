@@ -14,7 +14,7 @@ rbac_policies_path="backstage/rbac-policies.csv"
 users_path="users.yaml"
 sign_in_module_path="backstage/packages/app/src/modules/signIn/index.tsx"
 app_path="backstage/packages/app/src/App.tsx"
-kind_values_path="deploy/kind/backstage.yaml"
+kind_values_path="deploy/dev/backstage.yaml"
 chart_values_path="charts/backstage/values.yaml"
 
 backend_index=$(cat "$backend_index_path")
