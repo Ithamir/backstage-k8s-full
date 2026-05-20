@@ -74,9 +74,4 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Run TechDocs lint
-        run: |
-          docker run --rm \
-            -v "$PWD:/content" \
-            -w /content \
-            spotify/techdocs \
-            techdocs-cli generate --no-docker --verbose
+        run: npx -y @techdocs/cli@latest generate --source-dir . --output-dir ./.techdocs-output --verbose

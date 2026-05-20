@@ -6,6 +6,7 @@ BACKSTAGE_NS := backstage
 
 tf-check:
 	terraform -chdir=terraform fmt -check -recursive
+	terraform -chdir=terraform init -backend=false -input=false
 	terraform -chdir=terraform validate
 
 charts-lint:

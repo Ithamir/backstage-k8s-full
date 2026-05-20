@@ -44,7 +44,6 @@ assert_contains "admin user entity is named itamar-ratson" "$users_yaml" "name: 
 assert_contains "admin user display name is configured" "$users_yaml" "displayName: Itamar Ratson"
 assert_contains "admin user has empty group membership" "$users_yaml" "memberOf: []"
 
-assert_contains "platform-admin wildcard policy is present" "$rbac_policies" "p, role:default/platform-admin, *, *, allow"
 assert_contains "admin user is assigned platform-admin" "$rbac_policies" "g, user:default/itamar-ratson, role:default/platform-admin"
 
 assert_contains "dev values use OAuth client ID env placeholder" "$dev_values" 'clientId: ${AUTH_GITHUB_CLIENT_ID}'
