@@ -9,6 +9,7 @@ tf-check:
 	terraform -chdir=terraform validate
 
 charts-lint:
+	./tests/charts/test-actionlint.sh
 	helm lint charts/edge-gateway -f deploy/dev/edge-gateway.yaml
 	helm lint charts/backstage -f deploy/dev/backstage.yaml
 

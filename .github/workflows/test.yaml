@@ -1,0 +1,82 @@
+name: Test
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  charts-lint:
+    name: charts-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+      - name: Install actionlint
+        env:
+          ACTIONLINT_VERSION: 1.7.12
+        run: |
+          curl -fsSL -o actionlint.tar.gz "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          tar -xzf actionlint.tar.gz actionlint
+          mkdir -p "$HOME/.local/bin"
+          mv actionlint "$HOME/.local/bin/actionlint"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Run charts lint
+        run: make charts-lint
+
+  charts-test:
+    name: charts-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+      - name: Run charts tests
+        run: make charts-test
+
+  rbac-test:
+    name: rbac-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run RBAC tests
+        run: make rbac-test
+
+  rbac-admin-auth-test:
+    name: rbac-admin-auth-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run RBAC admin auth tests
+        run: make rbac-admin-auth-test
+
+  tf-check:
+    name: tf-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+      - name: Run Terraform checks
+        run: make tf-check
+
+  docs-lint:
+    name: docs-lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run TechDocs lint
+        run: |
+          docker run --rm \
+            -v "$PWD:/content" \
+            -w /content \
+            spotify/techdocs \
+            techdocs-cli generate --no-docker --verbose
