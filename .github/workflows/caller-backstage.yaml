@@ -1,0 +1,41 @@
+# This caller intentionally does not include these backstage/ files in the
+# image-build path filter:
+# - backstage/rbac-policies.csv: mounted through Helm --set-file, not baked into
+#   the container image.
+# - backstage/app-config*.yaml: runtime configuration is rendered by the chart
+#   from deploy/dev/backstage.yaml.
+# - backstage/catalog-info.yaml, backstage/mkdocs.yaml, and backstage/docs/**:
+#   catalog and TechDocs source changes do not change the runtime image.
+
+name: Build Backstage Image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - backstage/packages/**
+      - backstage/Dockerfile
+      - backstage/.dockerignore
+      - backstage/yarn.lock
+      - backstage/package.json
+      - backstage/backstage.json
+      - backstage/.yarnrc.yml
+      - backstage/.yarn/**
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
+  issues: write
+
+jobs:
+  build:
+    name: Build Backstage
+    uses: ./.github/workflows/build-image.yaml
+    with:
+      app-name: backstage
+      context: backstage
+      dockerfile: backstage/Dockerfile
+      bump-file: deploy/dev/backstage.yaml

@@ -110,6 +110,22 @@ grep -A3 '^image:' deploy/dev/backstage.yaml
 
 The `image.tag` value is populated by the CI/CD image build workflow after the first successful build. Until that first build has landed a tag in `deploy/dev/backstage.yaml`, a fresh clone may not have a pullable image for `make smoke`.
 
+GHCR packages default to private after the first push. Flip package visibility to public manually in GitHub package settings once per package so the local cluster can pull without image pull secrets.
+
+## Verifying Images
+
+Verify a CI-built image with cosign:
+
+```bash
+cosign verify ghcr.io/itamar-ratson/backstage-k8s-full/<app>:<sha> \
+  --certificate-identity-regexp ".+" \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+## First-Deploy Bootstrap
+
+A fresh clone needs the first image build to populate `deploy/dev/backstage.yaml` with an `image.tag` value before `make smoke` can pull Backstage from GHCR. After the build workflow lands, trigger the bootstrap build with a small path-matching change under `backstage/`; [issue #5](https://github.com/Itamar-Ratson/backstage-k8s-full/issues/5) is the bootstrap runbook for that first deployment.
+
 ## Step 5: Create the GitHub PAT Secret
 
 Backstage discovers catalog entities from this GitHub repo at runtime and uses scaffolder actions to publish GitHub changes. It needs a fine-grained Personal Access Token (PAT) for those GitHub API calls.
