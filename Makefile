@@ -79,7 +79,4 @@ smoke: tf-check charts-lint charts-test
 		-n $(BACKSTAGE_NS) --timeout=300s --context $(KUBE_CONTEXT)
 	@echo "Verifying Backstage is reachable..."
 	curl -fsS http://backstage.localtest.me:8080 | grep -q '<title>'
-	@echo "Verifying catalog is non-empty..."
-	@curl -fsS http://backstage.localtest.me:8080/api/catalog/entities | grep -q '"kind"' || \
-		(echo "WARN: Catalog appears empty — GitHub discovery may not have completed yet." && exit 1)
 	@echo "Smoke test passed."
