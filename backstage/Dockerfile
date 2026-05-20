@@ -1,3 +1,5 @@
+# bootstrap: first CI build
+
 # Stage 1 - Create yarn install skeleton layer
 FROM node:22-bookworm-slim AS packages
 
@@ -47,8 +49,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   apt-get update && \
   apt-get install -y --no-install-recommends python3 python3-pip g++ build-essential libsqlite3-dev && \
   pip3 install --break-system-packages \
-    mkdocs-techdocs-core==1.6.2 \
-    mkdocs-mermaid2-plugin==1.2.3
+  mkdocs-techdocs-core==1.6.2 \
+  mkdocs-mermaid2-plugin==1.2.3
 
 USER node
 WORKDIR /app
