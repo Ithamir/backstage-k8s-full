@@ -14,7 +14,33 @@ p, role:default/viewer, kubernetes.resources.read, read, allow
 p, role:default/viewer, kubernetes.clusters.read, read, allow
 p, role:default/viewer, kubernetes-proxy, use, allow
 p, role:default/viewer, search-query, read, allow
-p, role:default/platform-admin, *, *, allow
+p, role:default/platform-admin, catalog-entity, read, allow
+p, role:default/platform-admin, catalog-entity, create, allow
+p, role:default/platform-admin, catalog-entity, update, allow
+p, role:default/platform-admin, catalog-entity, delete, allow
+p, role:default/platform-admin, catalog.entity.create, create, allow
+p, role:default/platform-admin, catalog.entity.validate, use, allow
+p, role:default/platform-admin, catalog-location, read, allow
+p, role:default/platform-admin, catalog-location, create, allow
+p, role:default/platform-admin, catalog-location, delete, allow
+p, role:default/platform-admin, catalog.location.analyze, use, allow
+p, role:default/platform-admin, scaffolder-template, read, allow
+p, role:default/platform-admin, scaffolder-action, use, allow
+p, role:default/platform-admin, scaffolder-task, read, allow
+p, role:default/platform-admin, scaffolder-task, use, allow
+p, role:default/platform-admin, scaffolder.task.create, create, allow
+p, role:default/platform-admin, scaffolder.template.management, use, allow
+p, role:default/platform-admin, techdocs-metadata, read, allow
+p, role:default/platform-admin, techdocs-content, read, allow
+p, role:default/platform-admin, kubernetes.proxy, use, allow
+p, role:default/platform-admin, kubernetes.resources.read, read, allow
+p, role:default/platform-admin, kubernetes.clusters.read, read, allow
+p, role:default/platform-admin, kubernetes-proxy, use, allow
+p, role:default/platform-admin, search-query, read, allow
+p, role:default/platform-admin, policy-entity, read, allow
+p, role:default/platform-admin, policy-entity, update, allow
+p, role:default/platform-admin, policy-entity, delete, allow
+p, role:default/platform-admin, policy.entity.create, create, allow
 g, user:default/guest, role:default/viewer
 g, user:development/guest, role:default/viewer
 g, user:default/itamar-ratson, role:default/platform-admin
