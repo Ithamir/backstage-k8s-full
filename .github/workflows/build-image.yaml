@@ -47,9 +47,11 @@ jobs:
         run: |
           short_sha="${GITHUB_SHA::7}"
           image="ghcr.io/itamar-ratson/backstage-k8s-full/${{ inputs.app-name }}"
-          echo "short-sha=${short_sha}" >> "$GITHUB_OUTPUT"
-          echo "image=${image}" >> "$GITHUB_OUTPUT"
-          echo "tag=${image}:${short_sha}" >> "$GITHUB_OUTPUT"
+          {
+            echo "short-sha=${short_sha}"
+            echo "image=${image}"
+            echo "tag=${image}:${short_sha}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
