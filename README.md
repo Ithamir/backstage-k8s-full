@@ -17,6 +17,8 @@ Install the following tools:
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) (>= 1.5)
 - [Helm](https://helm.sh/docs/intro/install/) (>= 3.x)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
+- [actionlint](https://github.com/rhysd/actionlint/releases) (used by `make charts-lint` to validate workflow files)
+- [cosign](https://docs.sigstore.dev/cosign/installation/) (optional, only needed to verify GHCR image signatures)
 - Node.js 20 or 22 (for building Backstage from source)
 
 ### Node.js Version

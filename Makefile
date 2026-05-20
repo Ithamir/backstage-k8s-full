@@ -64,5 +64,5 @@ smoke: tf-check charts-lint charts-test
 	kubectl wait --for=condition=Available deployment/backstage \
 		-n $(BACKSTAGE_NS) --timeout=300s --context $(KUBE_CONTEXT)
 	@echo "Verifying Backstage is reachable..."
-	curl -fsS http://backstage.localtest.me:8080 | grep -q '<title>'
+	curl -fsS --retry 10 --retry-delay 3 --retry-connrefused --retry-all-errors http://backstage.localtest.me:8080 | grep -q '<title>'
 	@echo "Smoke test passed."
