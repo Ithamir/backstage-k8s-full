@@ -17,8 +17,8 @@ Install the following tools:
 - [Terraform](https://developer.hashicorp.com/terraform/downloads) (>= 1.5)
 - [Helm](https://helm.sh/docs/intro/install/) (>= 3.x)
 - [kubectl](https://kubernetes.io/docs/tasks/tools/)
-- [actionlint](https://github.com/rhysd/actionlint/releases) (used by `make charts-lint` to validate workflow files)
-- [yq](https://github.com/mikefarah/yq/releases) (used by `make charts-lint` to validate template catalog registrations)
+- [actionlint](https://github.com/rhysd/actionlint/releases) (used by CI to validate workflow files)
+- [yq](https://github.com/mikefarah/yq/releases) (used by CI to validate template catalog registrations)
 - [cosign](https://docs.sigstore.dev/cosign/installation/) (optional, only needed to verify GHCR image signatures)
 - Node.js 20 or 22 (for building Backstage from source)
 
@@ -111,7 +111,7 @@ The dev overlay pulls Backstage from GHCR:
 grep -A3 '^image:' deploy/dev/backstage.yaml
 ```
 
-The `image.tag` value is populated by the CI/CD image build workflow after the first successful build. Until that first build has landed a tag in `deploy/dev/backstage.yaml`, a fresh clone may not have a pullable image for `make smoke`.
+The `image.tag` value is populated by the CI/CD image build workflow after the first successful build. Until that first build has landed a tag in `deploy/dev/backstage.yaml`, a fresh clone may not have a pullable image for the local Helm deployment.
 
 GHCR packages default to private after the first push. Flip package visibility to public manually in GitHub package settings once per package so the local cluster can pull without image pull secrets.
 
@@ -127,13 +127,13 @@ cosign verify ghcr.io/itamar-ratson/backstage-k8s-full/<app>:<sha> \
 
 ## First-Deploy Bootstrap
 
-A fresh clone needs the first image build to populate `deploy/dev/backstage.yaml` with an `image.tag` value before `make smoke` can pull Backstage from GHCR. After the build workflow lands, trigger the bootstrap build with a small path-matching change under `backstage/`; [issue #5](https://github.com/Itamar-Ratson/backstage-k8s-full/issues/5) is the bootstrap runbook for that first deployment.
+A fresh clone needs the first image build to populate `deploy/dev/backstage.yaml` with an `image.tag` value before the local Helm deployment can pull Backstage from GHCR. After the build workflow lands, trigger the bootstrap build with a small path-matching change under `backstage/`; [issue #5](https://github.com/Itamar-Ratson/backstage-k8s-full/issues/5) is the bootstrap runbook for that first deployment.
 
-## Step 5: Create the GitHub PAT Secret
+## Step 5: Create the GitHub App Secret
 
-Backstage discovers catalog entities from this GitHub repo at runtime and uses scaffolder actions to publish GitHub changes. It needs a fine-grained Personal Access Token (PAT) for those GitHub API calls.
+Backstage discovers catalog entities from this GitHub repo at runtime, uses scaffolder actions to publish GitHub changes, and supports GitHub sign-in. It uses one GitHub App for all of those GitHub calls.
 
-1. Create a **fine-grained PAT** at <https://github.com/settings/personal-access-tokens/new>:
+1. Create and install a GitHub App for this repo:
    - **Repository access:** Only select `Itamar-Ratson/backstage-k8s-full`
    - **Permissions:**
      - `Contents: Read and write` — read catalog-info.yaml files and publish scaffolded changes
@@ -141,57 +141,37 @@ Backstage discovers catalog entities from this GitHub repo at runtime and uses s
      - `Pull requests: Read and write` — open pull requests from scaffolder actions
      - `Workflows: Read and write` — publish changes that include workflow files
      - `Metadata: Read` — auto-granted
+   - **Callback URL:** `http://backstage.localtest.me:8080/api/auth/github/handler/frame`
 
 2. Create the Kubernetes secret. Either use the imperative form:
 
 ```bash
 kubectl create namespace backstage --dry-run=client -o yaml | kubectl apply -f - --context kind-backstage
-kubectl create secret generic backstage-github-token \
-  --from-literal=GITHUB_TOKEN="$GITHUB_TOKEN" \
+kubectl create secret generic backstage-github-app \
+  --from-literal=APP_ID="$APP_ID" \
+  --from-literal=CLIENT_ID="$CLIENT_ID" \
+  --from-literal=CLIENT_SECRET="$CLIENT_SECRET" \
+  --from-file=PRIVATE_KEY=path/to/private-key.pem \
   -n backstage --context kind-backstage
 ```
 
-…or copy `secret-backstage-github-token.example.yaml` to `secret-backstage-github-token.yaml` (gitignored), substitute the PAT, and `kubectl apply -f` it.
+Keep the downloaded `.pem` file out of version control.
 
 Verify:
 
 ```bash
-kubectl get secret backstage-github-token -n backstage --context kind-backstage
+kubectl get secret backstage-github-app -n backstage --context kind-backstage
 ```
 
-## Step 6: Provision a GitHub OAuth App for the kind deployment
+This Secret is a one-time bootstrap prerequisite for a fresh kind cluster. Verify that it exists before installing the Backstage chart; the chart consumes the Secret but does not create it.
 
-The kind deployment supports GitHub admin sign-in alongside guest auth.
-
-Create or edit a GitHub OAuth App at <https://github.com/settings/developers> with:
-
-- **Homepage URL:** `http://backstage.localtest.me:8080`
-- **Authorization callback URL:** `http://backstage.localtest.me:8080/api/auth/github/handler/frame`
-
-An existing OAuth App can be edited in place. Reuse the same `client_id` and `client_secret`; only the homepage and callback URLs need to point at the kind hostname.
-
-Create the Kubernetes Secret. Either use the imperative form:
-
-```bash
-kubectl create secret generic backstage-github-oauth \
-  --from-literal=AUTH_GITHUB_CLIENT_ID="$AUTH_GITHUB_CLIENT_ID" \
-  --from-literal=AUTH_GITHUB_CLIENT_SECRET="$AUTH_GITHUB_CLIENT_SECRET" \
-  -n backstage --context kind-backstage
-```
-
-…or copy `secret-backstage-github-oauth.example.yaml` to `secret-backstage-github-oauth.yaml` (gitignored), substitute the OAuth App credentials, and `kubectl apply -f` it.
-
-This Secret is a one-time bootstrap prerequisite for a fresh kind cluster. `make smoke` checks that it exists, but it does not regenerate it on each run.
-
-The OAuth App is separate from the `backstage-github-token` PAT. The OAuth App signs you in to Backstage; the PAT lets Backstage discover catalog files and publish GitHub changes during scaffolder actions.
-
-## Step 7: Deploy with Helm
+## Step 6: Deploy with Helm
 
 Install the edge-gateway chart (shared Gateway resource) and then the backstage chart:
 
 ```bash
 # Install the edge-gateway (creates the gateway namespace)
-helm upgrade --install edge-gateway charts/edge-gateway \
+helm upgrade --install edge-gateway charts/platform/edge-gateway \
   --namespace gateway --create-namespace --wait \
   --kube-context kind-backstage \
   -f deploy/dev/edge-gateway.yaml
@@ -201,23 +181,15 @@ kubectl create namespace backstage --dry-run=client -o yaml | kubectl apply -f -
 kubectl label namespace backstage gateway-routes=enabled --overwrite --context kind-backstage
 
 # Install backstage
-helm upgrade --install backstage charts/backstage \
+helm upgrade --install backstage charts/workloads/backstage \
   --namespace backstage --wait --timeout 5m \
   --kube-context kind-backstage \
-  -f deploy/dev/backstage.yaml \
-  --set-file rbac.policies=backstage/rbac-policies.csv \
-  --set-file rbac.users=users.yaml
+  -f deploy/dev/backstage.yaml
 ```
 
-**Namespace label requirement:** Any app fronting the shared edge-gateway must have its namespace labeled with `gateway-routes=enabled`. The Gateway uses a label-selector `allowedRoutes` policy — only HTTPRoutes in namespaces carrying this label are admitted. The Makefile applies this label automatically as part of `make smoke`.
+**Namespace label requirement:** Any app fronting the shared edge-gateway must have its namespace labeled with `gateway-routes=enabled`. The Gateway uses a label-selector `allowedRoutes` policy — only HTTPRoutes in namespaces carrying this label are admitted. Apply the label before installing workloads that define HTTPRoutes.
 
-Or simply run the full smoke test which performs all of the above:
-
-```bash
-make smoke
-```
-
-## Step 8: Access Backstage
+## Step 7: Access Backstage
 
 Open <http://backstage.localtest.me:8080> in your browser. No port-forwarding required.
 
@@ -227,11 +199,7 @@ You should see both `Guest` and `GitHub` sign-in options.
 
 ## Manual RBAC Demo
 
-Run this sequence after changing frontend code or pulling a new image tag:
-
-```bash
-make smoke
-```
+Run the Helm deployment sequence above after changing frontend code or pulling a new image tag.
 
 Then verify the end-to-end flow:
 
@@ -250,12 +218,10 @@ When you make changes and need to redeploy:
 
 ```bash
 # Upgrade the helm release with the image tag recorded in deploy/dev/backstage.yaml
-helm upgrade backstage charts/backstage \
+helm upgrade backstage charts/workloads/backstage \
   --namespace backstage --wait --timeout 5m \
   --kube-context kind-backstage \
-  -f deploy/dev/backstage.yaml \
-  --set-file rbac.policies=backstage/rbac-policies.csv \
-  --set-file rbac.users=users.yaml
+  -f deploy/dev/backstage.yaml
 ```
 
 ## Useful Commands
@@ -293,19 +259,34 @@ cd terraform && terraform destroy
 Run the full end-to-end verification. This assumes `deploy/dev/backstage.yaml` points at a Backstage image tag that exists in GHCR:
 
 ```bash
-make smoke
+terraform -chdir=terraform fmt -check -recursive
+terraform -chdir=terraform init -backend=false -input=false
+terraform -chdir=terraform validate
+helm lint charts/platform/edge-gateway -f deploy/dev/edge-gateway.yaml
+helm lint charts/workloads/backstage -f deploy/dev/backstage.yaml
+curl -fsS --retry 10 --retry-delay 3 --retry-connrefused --retry-all-errors http://backstage.localtest.me:8080 | grep -q '<title>'
 ```
 
 Run Terraform validation only:
 
 ```bash
-make tf-check
+terraform -chdir=terraform fmt -check -recursive
+terraform -chdir=terraform init -backend=false -input=false
+terraform -chdir=terraform validate
 ```
 
 Run Helm chart linting only:
 
 ```bash
-make charts-lint
+./tests/charts/test-actionlint.sh
+./tests/charts/test-templates-registered.sh
+./tests/charts/test-chart-layout.sh
+helm dependency build charts/platform/argo-cd
+helm lint charts/platform/argo-cd
+helm dependency build charts/platform/envoy-gateway
+helm lint charts/platform/envoy-gateway
+helm lint charts/platform/edge-gateway -f deploy/dev/edge-gateway.yaml
+helm lint charts/workloads/backstage -f deploy/dev/backstage.yaml
 ```
 
 ## Next Steps

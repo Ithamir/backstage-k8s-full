@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CHART_DIR="charts/backstage"
+CHART_DIR="charts/workloads/backstage"
 FIXTURES="tests/charts/fixtures"
 PASS=0
 FAIL=0
 
 assert_contains() {
   local label="$1" output="$2" expected="$3"
-  if echo "$output" | grep -qF -- "$expected"; then
+  if grep -qF -- "$expected" <<<"$output"; then
     PASS=$((PASS + 1))
   else
     FAIL=$((FAIL + 1))
@@ -19,7 +19,7 @@ assert_contains() {
 
 assert_not_contains() {
   local label="$1" output="$2" unexpected="$3"
-  if ! echo "$output" | grep -qF -- "$unexpected"; then
+  if ! grep -qF -- "$unexpected" <<<"$output"; then
     PASS=$((PASS + 1))
   else
     FAIL=$((FAIL + 1))
@@ -35,13 +35,46 @@ assert_fails() {
   if output=$("$@" 2>&1); then
     FAIL=$((FAIL + 1))
     echo "FAIL: $label (expected failure but succeeded)"
-  elif echo "$output" | grep -qF -- "$expected_msg"; then
+  elif grep -qF -- "$expected_msg" <<<"$output"; then
     PASS=$((PASS + 1))
   else
     FAIL=$((FAIL + 1))
     echo "FAIL: $label"
     echo "  expected error containing: $expected_msg"
     echo "  got: $output"
+  fi
+}
+
+assert_file_exists() {
+  local label="$1" path="$2"
+  if [ -f "$path" ]; then
+    PASS=$((PASS + 1))
+  else
+    FAIL=$((FAIL + 1))
+    echo "FAIL: $label"
+    echo "  missing: $path"
+  fi
+}
+
+assert_directory_exists() {
+  local label="$1" path="$2"
+  if [ -d "$path" ]; then
+    PASS=$((PASS + 1))
+  else
+    FAIL=$((FAIL + 1))
+    echo "FAIL: $label"
+    echo "  missing: $path"
+  fi
+}
+
+assert_path_missing() {
+  local label="$1" path="$2"
+  if [ ! -e "$path" ]; then
+    PASS=$((PASS + 1))
+  else
+    FAIL=$((FAIL + 1))
+    echo "FAIL: $label"
+    echo "  still present: $path"
   fi
 }
 

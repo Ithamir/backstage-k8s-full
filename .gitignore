@@ -18,7 +18,6 @@
 !.gitignore
 !Dockerfile
 !.dockerignore
-!Makefile
 
 # Backstage app source (scaffolded, needed for build + yarn dev)
 !backstage/.yarnrc.yml
@@ -42,9 +41,14 @@
 
 # Terraform state and cache (override folder allowlist)
 terraform/.terraform/**
+terraform/terraform.tfvars
+!terraform/terraform.tfvars.example
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 terraform/.terraform.tfstate.lock.info
+
+# Helm dependency archives are rebuilt by Helm/ArgoCD from Chart.yaml.
+charts/platform/*/charts/*.tgz
 
 # Explicitly Disallow
 node_modules
