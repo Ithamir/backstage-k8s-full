@@ -43,6 +43,7 @@ jobs:
           ./tests/charts/test-chart-layout.sh
           ./tests/charts/test-no-make-references.sh
           ./tests/docs/test-github-app-setup-doc.sh
+          ./tests/docs/test-readme-gitops-bootstrap-doc.sh
           helm dependency build charts/platform/argo-cd
           helm lint charts/platform/argo-cd
           helm dependency build charts/platform/envoy-gateway
@@ -66,6 +67,8 @@ jobs:
           ./tests/charts/test-ci-cd-pipeline-scaffold.sh
           ./tests/charts/test-platform-argo-cd-renders.sh
           ./tests/charts/test-platform-envoy-gateway-renders.sh
+          ./tests/gitops/test-platform-appset.sh
+          ./tests/gitops/test-workloads-appset.sh
       - name: rbac-test
         run: ./tests/rbac/test-rbac-policies-csv.sh
       - name: rbac-admin-auth-test
