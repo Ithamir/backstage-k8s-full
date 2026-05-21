@@ -2,25 +2,21 @@
 # These values are for local development only - do not use for other environments.
 image:
   repository: ghcr.io/itamar-ratson/backstage-k8s-full/backstage
-  tag: "2081fac"
+  tag: "4c692e2"
   pullPolicy: IfNotPresent
-
 github:
   auth:
     create: false
     existingSecret: backstage-github-app
-
 oauth:
   github:
     create: false
     existingSecret: backstage-github-app
-
 postgres:
   enabled: true
   auth:
     create: true
     password: hunter2
-
 rbac:
   policies: |
     p, role:default/viewer, catalog-entity, read, allow
@@ -78,7 +74,6 @@ rbac:
       profile:
         displayName: Itamar Ratson
       memberOf: []
-
 appConfig:
   kubernetes:
     serviceLocatorMethod:
