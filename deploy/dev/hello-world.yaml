@@ -1,4 +1,4 @@
 image:
   repository: ghcr.io/itamar-ratson/backstage-k8s-full/hello-world
-  tag: ""
+  tag: "ae37c70"
   pullPolicy: IfNotPresent
