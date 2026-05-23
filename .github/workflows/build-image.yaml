@@ -73,7 +73,9 @@ jobs:
           provenance: mode=max
           sbom: true
           push: true
-          tags: ${{ steps.meta.outputs.tag }}
+          tags: |
+            ${{ steps.meta.outputs.tag }}
+            ${{ steps.meta.outputs.image }}:latest
           cache-from: type=gha,scope=${{ inputs.app-name }}
           cache-to: type=gha,mode=max,scope=${{ inputs.app-name }}
 
