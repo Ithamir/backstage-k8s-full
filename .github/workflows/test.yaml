@@ -82,6 +82,7 @@ jobs:
       - name: tf-check
         run: |
           ./tests/terraform/test-bootstrap-seed.sh
+          ./tests/terraform/test-loadbalancer-exposure.sh
           terraform -chdir=terraform fmt -check -recursive
           terraform -chdir=terraform init -backend=false -input=false
           terraform -chdir=terraform validate

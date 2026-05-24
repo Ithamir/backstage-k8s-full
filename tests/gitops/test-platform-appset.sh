@@ -55,7 +55,7 @@ assert_contains "GatewayClass controller is configured" "$envoy_values" "control
 assert_contains "GatewayClass references custom EnvoyProxy" "$envoy_values" "name: custom-proxy-config"
 assert_contains "LoadBalancer Service is configured" "$envoy_values" "type: LoadBalancer"
 assert_contains "Envoy Service pins IPv4 family" "$envoy_values" "ipFamilies: [IPv4]"
-assert_contains "Envoy Service pins loadBalancerIP" "$envoy_values" "loadBalancerIP: 172.18.0.250"
+assert_not_contains "Envoy Service does not pin loadBalancerIP (CPK ignores it)" "$envoy_values" "loadBalancerIP:"
 assert_not_contains "NodePort 30080 is removed" "$envoy_values" "nodePort: 30080"
 
 report_results "Platform ApplicationSet"

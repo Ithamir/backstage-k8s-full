@@ -17,6 +17,22 @@ resource "docker_container" "cloud_provider_kind" {
   depends_on = [kind_cluster.this]
 }
 
+data "external" "envoy_lb_ip" {
+  program = [
+    "${path.module}/scripts/wait-for-lb-ip.sh",
+    local.envoy_lb_ip_cache,
+    "kind-${var.cluster_name}",
+    "envoy-gateway-system",
+    "gateway.envoyproxy.io/owning-gateway-namespace=gateway,gateway.envoyproxy.io/owning-gateway-name=edge-gateway",
+    "600",
+  ]
+
+  depends_on = [
+    kubectl_manifest.root_app,
+    docker_container.cloud_provider_kind,
+  ]
+}
+
 resource "docker_image" "nginx_lb_proxy" {
   name = "nginx:1.27-alpine"
 }
@@ -51,4 +67,8 @@ resource "docker_container" "nginx_lb_proxy" {
     docker_container.cloud_provider_kind,
     terraform_data.nginx_lb_proxy_config,
   ]
+
+  lifecycle {
+    replace_triggered_by = [terraform_data.nginx_lb_proxy_config]
+  }
 }

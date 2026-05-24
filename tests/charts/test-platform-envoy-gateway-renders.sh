@@ -31,7 +31,7 @@ if rendered=$(helm template envoy-gateway "$CHART_DIR" \
   assert_contains "renders envoy-gateway controller" "$rendered" "app.kubernetes.io/name: gateway-helm"
   assert_contains "renders eg-lb GatewayClass" "$rendered" "name: eg-lb"
   assert_contains "renders LoadBalancer Envoy Service patch" "$rendered" "type: LoadBalancer"
-  assert_contains "renders pinned Envoy loadBalancerIP" "$rendered" "loadBalancerIP: 172.18.0.250"
+  assert_not_contains "rendered Envoy Service does not pin loadBalancerIP" "$rendered" "loadBalancerIP:"
   assert_contains "renders IPv4 Service family" "$rendered" "ipFamilies:"
   assert_contains "renders IPv4 Service family value" "$rendered" "- IPv4"
   assert_not_contains "rendered Envoy config has no NodePort" "$rendered" "nodePort: 30080"

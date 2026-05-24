@@ -2,7 +2,6 @@
 set -euo pipefail
 
 CONTEXT="${CONTEXT:-kind-backstage}"
-EXPECTED_LB_IP="${EXPECTED_LB_IP:-172.18.0.250}"
 SERVICE_NAMESPACE="${SERVICE_NAMESPACE:-envoy-gateway-system}"
 SERVICE_SELECTOR="${SERVICE_SELECTOR:-gateway.envoyproxy.io/owning-gateway-namespace=gateway,gateway.envoyproxy.io/owning-gateway-name=edge-gateway}"
 BACKSTAGE_MARKER="${BACKSTAGE_MARKER:-<title>}"
@@ -33,17 +32,17 @@ external_ip=$(
     -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
 )
 
-if [ "$external_ip" != "$EXPECTED_LB_IP" ]; then
+if [ -z "$external_ip" ]; then
   kubectl --context "$CONTEXT" -n "$SERVICE_NAMESPACE" get svc "$service_name" -o wide
-  fail "EXTERNAL-IP for $service_name was $external_ip, expected $EXPECTED_LB_IP"
+  fail "EXTERNAL-IP for $service_name has not been assigned by cloud-provider-kind"
 fi
 
-echo "PASS: EXTERNAL-IP equals $EXPECTED_LB_IP"
+echo "PASS: $service_name has EXTERNAL-IP $external_ip"
 
 direct_body=$(
   curl -fsS --retry 10 --retry-delay 3 --retry-connrefused --retry-all-errors \
     -H "Host: backstage.localtest.me" \
-    "http://${EXPECTED_LB_IP}/"
+    "http://${external_ip}/"
 )
 contains_marker "Direct LB IP curl" "$direct_body" "$BACKSTAGE_MARKER"
 echo "PASS: direct LB IP reaches Backstage through the cluster"

@@ -11,12 +11,15 @@ tfvars_example=$(sed -n '1,$p' terraform/terraform.tfvars.example 2>/dev/null ||
 cluster_config=$(sed -n '1,$p' terraform/cluster.tf 2>/dev/null || true)
 gitignore=$(sed -n '1,$p' .gitignore 2>/dev/null || true)
 smoke_test=$(sed -n '1,$p' tests/cluster/test-loadbalancer.sh 2>/dev/null || true)
+wait_script=$(sed -n '1,$p' terraform/scripts/wait-for-lb-ip.sh 2>/dev/null || true)
 
 assert_contains "docker provider is declared" "$terraform_config" 'source  = "kreuzwerker/docker"'
 assert_contains "docker provider is configured" "$terraform_config" 'provider "docker"'
-assert_contains "envoy_lb_ip variable exists" "$terraform_config" 'variable "envoy_lb_ip"'
-assert_contains "envoy_lb_ip default is pinned" "$terraform_config" 'default     = "172.18.0.250"'
-assert_contains "tfvars example documents envoy_lb_ip" "$tfvars_example" 'envoy_lb_ip = "172.18.0.250"'
+assert_contains "external provider is declared" "$terraform_config" 'source  = "hashicorp/external"'
+
+assert_not_contains "envoy_lb_ip variable is removed" "$terraform_config" 'variable "envoy_lb_ip"'
+assert_not_contains "tfvars example no longer pins envoy_lb_ip" "$tfvars_example" 'envoy_lb_ip ='
+assert_not_contains "hardcoded LB IP 172.18.0.250 is gone from terraform" "$terraform_config" '172.18.0.250'
 
 assert_not_contains "KinD extra port mappings removed" "$cluster_config" "extra_port_mappings"
 assert_not_contains "KinD host port 8080 removed" "$cluster_config" "host_port      = 8080"
@@ -29,21 +32,37 @@ assert_contains "cloud-provider-kind mounts docker socket" "$terraform_config" '
 assert_contains "cloud-provider-kind restarts unless stopped" "$terraform_config" 'restart      = "unless-stopped"'
 assert_not_contains "cloud-provider-kind port mapping flag is not used" "$terraform_config" "--enable-lb-port-mapping"
 
+assert_contains "envoy LB IP is discovered via external data source" "$terraform_config" 'data "external" "envoy_lb_ip"'
+assert_contains "external data source invokes wait-for-lb-ip script" "$terraform_config" "wait-for-lb-ip.sh"
+assert_contains "external data source depends on root ArgoCD app" "$terraform_config" "kubectl_manifest.root_app"
+
+assert_file_exists "wait-for-lb-ip script exists" "terraform/scripts/wait-for-lb-ip.sh"
+if [ -x terraform/scripts/wait-for-lb-ip.sh ]; then
+  PASS=$((PASS + 1))
+else
+  FAIL=$((FAIL + 1))
+  echo "FAIL: wait-for-lb-ip script is executable"
+fi
+assert_contains "wait script polls kubectl for ingress IP" "$wait_script" 'status.loadBalancer.ingress[0].ip'
+assert_contains "wait script caches the discovered IP" "$wait_script" 'cache_file'
+
 assert_contains "nginx image resource exists" "$terraform_config" 'resource "docker_image" "nginx_lb_proxy"'
 assert_contains "nginx image is pinned" "$terraform_config" 'nginx:1.27-alpine'
 assert_contains "nginx container exists" "$terraform_config" 'resource "docker_container" "nginx_lb_proxy"'
 assert_contains "nginx uses host network" "$terraform_config" 'network_mode = "host"'
 assert_contains "nginx config is mounted at default.conf" "$terraform_config" 'container_path = "/etc/nginx/conf.d/default.conf"'
 assert_contains "nginx config mount is read only" "$terraform_config" 'read_only      = true'
-assert_contains "nginx listens on IPv4" "$terraform_config" "listen 80;"
-assert_contains "nginx listens on IPv6" "$terraform_config" "listen [::]:80;"
-assert_contains "nginx forwards to envoy_lb_ip" "$terraform_config" 'proxy_pass http://${var.envoy_lb_ip}:80;'
+assert_contains "nginx binds to loopback only" "$terraform_config" "listen 127.0.0.1:80;"
+assert_not_contains "nginx no longer binds wildcard IPv4" "$terraform_config" "listen 80;"
+assert_not_contains "nginx no longer binds wildcard IPv6" "$terraform_config" "listen [::]:80;"
+assert_contains "nginx forwards to dynamic envoy LB IP" "$terraform_config" 'proxy_pass http://${local.envoy_lb_ip}:80;'
 assert_contains "nginx preserves Host header" "$terraform_config" 'proxy_set_header Host $host;'
+assert_contains "nginx container replaces when config changes" "$terraform_config" "replace_triggered_by = [terraform_data.nginx_lb_proxy_config]"
 assert_contains "generated nginx config is gitignored" "$gitignore" "terraform/.generated/"
 
 assert_file_exists "LoadBalancer smoke test exists" "tests/cluster/test-loadbalancer.sh"
-assert_contains "smoke test checks EXTERNAL-IP equality" "$smoke_test" "EXTERNAL-IP"
-assert_contains "smoke test curls direct LB IP" "$smoke_test" 'http://${EXPECTED_LB_IP}/'
+assert_contains "smoke test reads EXTERNAL-IP from the live Service" "$smoke_test" "status.loadBalancer.ingress[0].ip"
+assert_not_contains "smoke test no longer pins 172.18.0.250" "$smoke_test" "172.18.0.250"
 assert_contains "smoke test curls Backstage localtest.me" "$smoke_test" "http://backstage.localtest.me/"
 assert_contains "smoke test curls ArgoCD localtest.me" "$smoke_test" "http://argocd.localtest.me/"
 

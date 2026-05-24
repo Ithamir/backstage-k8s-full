@@ -39,7 +39,6 @@ envoyProxy:
             spec:
               externalTrafficPolicy: Cluster
               ipFamilies: [IPv4]
-              loadBalancerIP: 172.18.0.250
               ports:
                 - port: 80
                   protocol: TCP
