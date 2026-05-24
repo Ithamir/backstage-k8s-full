@@ -36,6 +36,34 @@ resource "kubernetes_namespace_v1" "backstage" {
 resource "kubernetes_namespace_v1" "argocd" {
   metadata {
     name = "argocd"
+    annotations = {
+      # Threaded to the destroy provisioner via self.metadata, since provisioners
+      # cannot reference other resources or vars.
+      "terraform.io/kubeconfig" = kind_cluster.this.kubeconfig_path
+    }
+  }
+
+  # Strip Argo CD finalizers before the namespace is deleted; once helm_release.argocd
+  # tears down the controller, nothing else can clear them and namespace delete hangs.
+  provisioner "local-exec" {
+    when    = destroy
+    command = <<-EOT
+      KUBECONFIG_PATH='${try(self.metadata[0].annotations["terraform.io/kubeconfig"], "")}'
+      if [ -z "$KUBECONFIG_PATH" ]; then
+        echo "[argocd-cleanup] no kubeconfig annotation on namespace, skipping" >&2
+        exit 0
+      fi
+      export KUBECONFIG="$KUBECONFIG_PATH"
+      if ! kubectl cluster-info >/dev/null 2>&1; then
+        echo "[argocd-cleanup] cluster unreachable, skipping" >&2
+        exit 0
+      fi
+      for kind in applications.argoproj.io appprojects.argoproj.io applicationsets.argoproj.io; do
+        kubectl get "$kind" -n '${self.metadata[0].name}' -o name 2>/dev/null | \
+          xargs -r -I{} kubectl patch {} -n '${self.metadata[0].name}' --type=json \
+            -p='[{"op":"remove","path":"/metadata/finalizers"}]' 2>/dev/null || true
+      done
+    EOT
   }
 
   depends_on = [kind_cluster.this]
@@ -91,30 +119,4 @@ resource "kubectl_manifest" "root_app" {
   ))
 
   depends_on = [helm_release.argocd]
-}
-
-# Strip Argo CD finalizers before destroy; namespace delete hangs once the controller is gone.
-resource "terraform_data" "argocd_finalizer_cleanup" {
-  input = {
-    kubeconfig = kind_cluster.this.kubeconfig_path
-    namespace  = kubernetes_namespace_v1.argocd.metadata[0].name
-  }
-
-  provisioner "local-exec" {
-    when    = destroy
-    command = <<-EOT
-      export KUBECONFIG='${self.input.kubeconfig}'
-      if ! kubectl cluster-info >/dev/null 2>&1; then
-        echo "[argocd-cleanup] cluster unreachable, skipping" >&2
-        exit 0
-      fi
-      for kind in applications.argoproj.io appprojects.argoproj.io applicationsets.argoproj.io; do
-        kubectl get "$kind" -n '${self.input.namespace}' -o name 2>/dev/null | \
-          xargs -r -I{} kubectl patch {} -n '${self.input.namespace}' --type=json \
-            -p='[{"op":"remove","path":"/metadata/finalizers"}]' 2>/dev/null || true
-      done
-    EOT
-  }
-
-  depends_on = [kubectl_manifest.root_app]
 }
