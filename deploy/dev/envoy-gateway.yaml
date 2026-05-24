@@ -17,7 +17,7 @@ gateway-helm:
 
 gatewayClass:
   enabled: true
-  name: eg-lb
+  name: eg-nodeport
   controllerName: gateway.envoyproxy.io/gatewayclass-controller
   parametersRef:
     group: gateway.envoyproxy.io
@@ -32,14 +32,13 @@ envoyProxy:
     type: Kubernetes
     kubernetes:
       envoyService:
-        type: LoadBalancer
+        type: NodePort
         patch:
           type: StrategicMerge
           value:
             spec:
               externalTrafficPolicy: Cluster
-              ipFamilies: [IPv4]
-              loadBalancerIP: 172.18.0.250
               ports:
                 - port: 80
+                  nodePort: 30080
                   protocol: TCP

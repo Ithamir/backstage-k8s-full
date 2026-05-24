@@ -1,4 +1,4 @@
-gatewayClassName: eg-lb
+gatewayClassName: eg-nodeport
 
 hostname: "*.localtest.me"
 
