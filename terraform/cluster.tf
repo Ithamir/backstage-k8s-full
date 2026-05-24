@@ -48,12 +48,7 @@ resource "kubernetes_namespace_v1" "argocd" {
   provisioner "local-exec" {
     when    = destroy
     command = <<-EOT
-      KUBECONFIG_PATH='${try(self.metadata[0].annotations["terraform.io/kubeconfig"], "")}'
-      if [ -z "$KUBECONFIG_PATH" ]; then
-        echo "[argocd-cleanup] no kubeconfig annotation on namespace, skipping" >&2
-        exit 0
-      fi
-      export KUBECONFIG="$KUBECONFIG_PATH"
+      export KUBECONFIG='${self.metadata[0].annotations["terraform.io/kubeconfig"]}'
       if ! kubectl cluster-info >/dev/null 2>&1; then
         echo "[argocd-cleanup] cluster unreachable, skipping" >&2
         exit 0
