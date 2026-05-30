@@ -1,7 +1,7 @@
 # Dev environment overrides for backstage chart.
 # These values are for local development only - do not use for other environments.
 image:
-  tag: "4e9edb1"
+  tag: "f99fa51"
   pullPolicy: IfNotPresent
 github:
   auth:
