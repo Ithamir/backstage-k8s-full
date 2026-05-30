@@ -2,7 +2,7 @@
 # These values are for local development only - do not use for other environments.
 image:
   repository: ghcr.io/itamar-ratson/backstage-k8s-full/backstage
-  tag: "b78c8a3"
+  tag: "eb00bd6"
   pullPolicy: IfNotPresent
 github:
   auth:
