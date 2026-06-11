@@ -1,8 +1,8 @@
 # Dev environment overrides for backstage chart.
 # These values are for local development only - do not use for other environments.
 image:
-  repository: ghcr.io/itamar-ratson/backstage-k8s-full/backstage
-  tag: "ac9e6fc"
+  repository: ghcr.io/ithamir/backstage-k8s-full/backstage
+  tag: "42887fe"
   pullPolicy: IfNotPresent
 github:
   auth:
